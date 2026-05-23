@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Ipoki"/>
 <title>Ipoki</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23B8860B'/><text y='72' x='50' text-anchor='middle' font-size='60'>📞</text></svg>"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23B8860B'/><text y='72' x='50' text-anchor='middle' font-size='60'>📞</text></svg>"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -190,8 +192,17 @@ button,input,textarea,select{font-family:var(--ff);}
 .rec-btn.save{background:var(--green);color:#fff;}
 .rec-limit{font-size:11px;color:var(--sub);text-align:center;margin-top:6px;}
 
-/* ── CALCULATOR ── */
-#v-calculator{background:#140C00;align-items:center;justify-content:center;}
+/* ── VOICE MESSAGE BUBBLE ── */
+.vm-bubble{display:flex;align-items:center;gap:8px;padding:8px 12px;min-width:160px;}
+.vm-play-btn{width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.vm-play-btn.me-btn{background:rgba(255,255,255,.25);color:#fff;}
+.vm-play-btn.them-btn{background:var(--gold);color:#fff;}
+.vm-wave{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3);}
+.vm-wave.them-wave{background:var(--gold-border);}
+.vm-dur{font-size:11px;opacity:.8;flex-shrink:0;}
+/* presence dot */
+.presence-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+
 .calc-box{background:#140C00;border-radius:20px;overflow:hidden;width:100%;max-width:300px;border:1px solid #3A2800;}
 .calc-disp{padding:20px 20px 10px;text-align:right;}
 .calc-expr{font-size:12px;color:#9A7A40;min-height:16px;}
@@ -284,8 +295,8 @@ button,input,textarea,select{font-family:var(--ff);}
 <!-- TOAST -->
 <div id="toast"></div>
 
-<!-- HAMBURGER -->
-<button id="hamburger" onclick="openSB()">☰</button>
+<!-- HAMBURGER / BACK BUTTON -->
+<button id="hamburger" onclick="hamburgerTap()">☰</button>
 <div id="sb-bd" onclick="closeSB()"></div>
 
 <!-- SIDEBAR -->
@@ -293,7 +304,7 @@ button,input,textarea,select{font-family:var(--ff);}
   <div class="sb-top">
     <div class="sb-brand">
       <div class="sb-brand-ic">📞</div>
-      <span class="sb-brand-nm">Poki</span>
+      <span class="sb-brand-nm">Ipoki</span>
     </div>
     <div class="sb-me" id="sb-me" onclick="go('profile');setSN('')">
       <div class="av" id="sb-av" style="width:32px;height:32px;font-size:12px;"></div>
@@ -334,17 +345,26 @@ button,input,textarea,select{font-family:var(--ff);}
       <div class="av" id="ct-av" style="width:38px;height:38px;font-size:15px;"></div>
       <div style="flex:1;min-width:0;">
         <div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="ct-name"></div>
-        <div style="font-size:11px;color:var(--green);">● Online</div>
+        <div style="font-size:11px;color:var(--sub);" id="ct-status">—</div>
       </div>
       <button class="ibtn" onclick="doCall()" title="Call">📞</button>
       <button class="ibtn" id="btn-dc" style="color:var(--red);">🗑️</button>
     </div>
     <div class="msgs-area scroll" id="msgs"></div>
     <div class="chat-bar">
-      <button class="ibtn" style="font-size:19px;flex-shrink:0;">😊</button>
+      <button class="ibtn" style="font-size:19px;flex-shrink:0;" onclick="toggleEmojiPicker()">😊</button>
       <input type="text" id="msg-inp" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()" oninput="toggleSend()"/>
-      <button class="ibtn" style="font-size:19px;flex-shrink:0;">🎤</button>
+      <button class="ibtn" style="font-size:19px;flex-shrink:0;" id="voice-msg-btn" onclick="toggleVoiceMsg()" title="Voice message">🎤</button>
       <button class="send-btn" id="send-btn" onclick="sendMsg()" disabled>➤</button>
+    </div>
+    <!-- VOICE MESSAGE RECORDER (in chat) -->
+    <div id="voice-msg-bar" style="display:none;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-top:1.5px solid var(--border);flex-shrink:0;">
+      <div id="vm-status" style="flex:1;font-size:13px;color:var(--sub);">Tap ⏺ to record (max 1 min)</div>
+      <div id="vm-timer" style="font-size:13px;font-weight:700;color:var(--red);display:none;">0s</div>
+      <button id="vm-rec-btn" onclick="vmStart()" style="background:var(--red);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;">⏺ Record</button>
+      <button id="vm-stop-btn" onclick="vmStop()" style="display:none;background:#555;color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;">⏹ Stop</button>
+      <button id="vm-send-btn" onclick="vmSend()" style="display:none;background:var(--gold);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;">▶ Send</button>
+      <button onclick="toggleVoiceMsg()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--sub);">✕</button>
     </div>
   </div>
 
@@ -364,10 +384,11 @@ button,input,textarea,select{font-family:var(--ff);}
   <div class="view" id="v-contacts">
     <div class="topbar">
       <span class="topbar-title">Contacts</span>
-      <div class="irow" style="flex:0 0 auto;width:160px;padding:7px 11px;">
+      <div class="irow" style="flex:0 0 auto;width:140px;padding:7px 11px;">
         <span class="iico">🔍</span>
         <input type="text" id="c-search" placeholder="Search" oninput="renderContacts()" style="font-size:13px;"/>
       </div>
+      <button class="ibtn" onclick="scanPhoneContacts()" title="Import from phone" style="color:var(--blue);font-size:20px;">📲</button>
       <button class="ibtn" onclick="openAddC()" style="color:var(--gold);font-size:22px;font-weight:700;">＋</button>
     </div>
     <div class="contacts-grid" id="contacts-grid"></div>
@@ -593,7 +614,7 @@ function showAuth(page){
   const T={
     splash:`<div class="acard" style="text-align:center;">
       <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;">
-        <div class="alogo-ic">📞</div><span class="alogo-nm">Poki</span>
+        <div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span>
       </div>
       <p style="color:var(--sub);font-size:14px;line-height:1.8;margin-bottom:26px;">Simple communication.<br>Pure connection. No distractions.</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
@@ -615,7 +636,7 @@ function showAuth(page){
       <div class="afooter">No account? <button class="bg" onclick="showAuth('signup')">Sign Up</button></div></div>`,
 
     signup:`<div class="acard">
-      <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Poki</span></div>
+      <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span></div>
       <div class="atitle">Create Account</div><p class="asub">Join Poki</p>
       <div class="field">
         <div class="irow"><span class="iico">👤</span><input type="text" id="su-name" placeholder="Full Name" autocomplete="name"/></div>
@@ -629,7 +650,7 @@ function showAuth(page){
       <div class="afooter">Have account? <button class="bg" onclick="showAuth('login')">Log In</button></div></div>`,
 
     forgot:`<div class="acard">
-      <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Poki</span></div>
+      <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span></div>
       <div class="atitle">Reset Password</div><p class="asub">Enter your registered email</p>
       <div class="field">
         <div class="irow"><span class="iico">📧</span><input type="email" id="f-email" placeholder="Email address"/></div>
@@ -693,6 +714,7 @@ async function doForgot(){
 
 async function logout(){
   if(!confirm('Log out?'))return;
+  await setOnline(false);
   if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null;}
   await sb.auth.signOut();
   me=null;contacts=[];chats={};callLog=[];notes=[];cur=null;
@@ -728,7 +750,10 @@ async function loadAndInit(user){
       id:'m'+m.id,
       db_id:m.id,
       from:m.sender_id===user.id?'me':'them',
-      text:m.text,
+      text:m.text||'',
+      type:m.type||'text',
+      voiceData:m.voice_url||null,
+      duration:m.duration||0,
       time:new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
     });
   });
@@ -757,6 +782,14 @@ async function loadAndInit(user){
   // Subscribe to real-time messages
   subscribeMessages(user.id);
 
+  // Set user as online
+  setOnline(true);
+  window.addEventListener('beforeunload',()=>setOnline(false));
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')setOnline(true);
+    else setOnline(false);
+  });
+
   document.getElementById('auth-layer').classList.add('gone');
   hideLoading();
   initApp();
@@ -773,7 +806,11 @@ function subscribeMessages(userId){
         if(!chats[senderId])chats[senderId]=[];
         const msg={
           id:'m'+m.id, db_id:m.id,
-          from:'them', text:m.text,
+          from:'them',
+          text:m.text||'',
+          type:m.type||'text',
+          voiceData:m.voice_url||null,
+          duration:m.duration||0,
           time:new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
         };
         chats[senderId].push(msg);
@@ -806,6 +843,7 @@ function go(screen){
   const el=document.getElementById('v-'+screen);
   if(el)el.classList.add('active');
   curScreen=screen;closeSB();
+  updateHamburger();
   if(screen==='calls')renderCalls();
   if(screen==='contacts')renderContacts();
   if(screen==='blocked')renderBlocked();
@@ -851,8 +889,19 @@ function openChat(id){
   if(!chats[id])chats[id]=[];
   setAv(document.getElementById('ct-av'),cur,38);
   document.getElementById('ct-name').textContent=cur.name;
+  document.getElementById('ct-status').textContent='—';
   document.getElementById('btn-dc').onclick=()=>{if(confirm('Delete this chat?')){deleteChat(id);}};
   swTab('chats');setSN('chats');go('chat');renderSB();
+  // Load real presence
+  loadContactPresence(id);
+  subscribePresence(id);
+  // Reset voice msg bar if open
+  const bar=document.getElementById('voice-msg-bar');
+  if(bar)bar.style.display='none';
+  const inp=document.getElementById('msg-inp');
+  if(inp)inp.style.display='block';
+  const sb2=document.getElementById('send-btn');
+  if(sb2)sb2.style.display='flex';
 }
 
 async function deleteChat(id){
@@ -867,12 +916,34 @@ function renderMsgs(){
   const box=document.getElementById('msgs');if(!box)return;
   const msgs=chats[cur.id]||[];
   box.innerHTML=`<div class="date-badge">Today</div>`+
-    msgs.map(m=>`<div class="mrow ${m.from}" id="mr-${m.id}"><div>
-      <div class="bubble ${m.from}" onclick="tDel('${m.id}')">${esc(m.text)}</div>
-      <div class="mmeta">${m.time}${m.from==='me'?' ✓✓':''}</div>
-      <button class="del-btn" id="db-${m.id}" onclick="delMsg('${m.id}','${m.db_id||''}')">🗑️ Delete</button>
-    </div></div>`).join('');
+    msgs.map(m=>{
+      const isVoice=m.type==='voice';
+      const bubbleContent=isVoice
+        ?`<div class="vm-bubble">
+            <button class="${m.from==='me'?'vm-play-btn me-btn':'vm-play-btn them-btn'}" onclick="playVoiceMsg('${m.id}',this)">▶</button>
+            <div class="${m.from==='me'?'vm-wave':'vm-wave them-wave'}"></div>
+            <span class="vm-dur">${m.duration||0}s</span>
+          </div>`
+        :esc(m.text||'');
+      return `<div class="mrow ${m.from}" id="mr-${m.id}"><div>
+        <div class="bubble ${m.from}" onclick="${isVoice?'':("tDel('"+m.id+"')")}">${bubbleContent}</div>
+        <div class="mmeta">${m.time}${m.from==='me'?' ✓✓':''}</div>
+        ${!isVoice?`<button class="del-btn" id="db-${m.id}" onclick="delMsg('${m.id}','${m.db_id||''}')">🗑️ Delete</button>`:''}
+      </div></div>`;
+    }).join('');
   box.scrollTop=box.scrollHeight;
+}
+
+// Store voice blobs in memory for playback
+const vmStore={};
+function playVoiceMsg(msgId, btn){
+  const msg=(chats[cur?.id]||[]).find(m=>m.id===msgId);
+  if(!msg||!msg.voiceData)return;
+  if(!vmStore[msgId]){vmStore[msgId]=new Audio(msg.voiceData);}
+  const audio=vmStore[msgId];
+  if(audio.paused){audio.currentTime=0;audio.play();btn.textContent='⏸';}
+  else{audio.pause();btn.textContent='▶';}
+  audio.onended=()=>{btn.textContent='▶';};
 }
 
 function tDel(id){const b=document.getElementById('db-'+id);if(b)b.classList.toggle('show');}
@@ -1011,7 +1082,206 @@ async function saveProfile(){
   toast('Profile saved ✓');
 }
 
-// ══════ DIALER ══════
+// ══════ HAMBURGER: smart back/menu ══════
+const BACK_SCREENS = ['chat','profile','blocked','calls','contacts','dialer','notes','calculator','more'];
+function hamburgerTap(){
+  if(BACK_SCREENS.includes(curScreen)){
+    // Act as back button
+    const backMap={chat:'empty',profile:'more',blocked:'more',calls:'empty',contacts:'empty',dialer:'empty',notes:'empty',calculator:'empty',more:'empty'};
+    go(backMap[curScreen]||'empty');
+    setSN('chats');
+  } else {
+    openSB();
+  }
+}
+function updateHamburger(){
+  const btn=document.getElementById('hamburger');
+  if(!btn)return;
+  btn.textContent=BACK_SCREENS.includes(curScreen)?'‹':'☰';
+  btn.style.fontSize=BACK_SCREENS.includes(curScreen)?'26px':'18px';
+}
+
+// ══════ PRESENCE (real online status) ══════
+async function setOnline(isOnline){
+  if(!me)return;
+  await sb.from('profiles').update({is_online:isOnline,last_seen:new Date().toISOString()}).eq('id',me.id);
+}
+
+function subscribePresence(contactId){
+  sb.channel('presence-'+contactId)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:`id=eq.${contactId}`},
+      payload=>{
+        const st=document.getElementById('ct-status');
+        if(!st||!cur||cur.id!==contactId)return;
+        const p=payload.new;
+        if(p.is_online){
+          st.innerHTML=`<span class="presence-dot" style="background:var(--green);"></span>Online`;
+          st.style.color='var(--green)';
+        } else {
+          const ago=p.last_seen?timeSince(new Date(p.last_seen)):'';
+          st.innerHTML=`<span class="presence-dot" style="background:var(--sub);"></span>Last seen ${ago}`;
+          st.style.color='var(--sub)';
+        }
+      }).subscribe();
+}
+
+async function loadContactPresence(contactId){
+  const st=document.getElementById('ct-status');
+  if(!st)return;
+  // Default: show nothing — contact may not be a Poki user
+  st.textContent='';
+  if(!contactId)return;
+  const {data,error}=await sb.from('profiles').select('is_online,last_seen').eq('id',contactId).single();
+  // If no profile found, this person is not on Poki — show nothing
+  if(error||!data){st.textContent='';return;}
+  if(data.is_online){
+    st.innerHTML=`<span class="presence-dot" style="background:var(--green);"></span>Online`;
+    st.style.color='var(--green)';
+  } else {
+    const ago=data.last_seen?timeSince(new Date(data.last_seen)):'';
+    st.innerHTML=ago?`<span class="presence-dot" style="background:var(--sub);"></span>Last seen ${ago}`:'';
+    st.style.color='var(--sub)';
+  }
+}
+
+function timeSince(date){
+  const secs=Math.floor((new Date()-date)/1000);
+  if(secs<60)return 'just now';
+  const mins=Math.floor(secs/60);
+  if(mins<60)return mins+'m ago';
+  const hrs=Math.floor(mins/60);
+  if(hrs<24)return hrs+'h ago';
+  return Math.floor(hrs/24)+'d ago';
+}
+
+// ══════ SCAN PHONE CONTACTS ══════
+async function scanPhoneContacts(){
+  if(!('contacts' in navigator&&'ContactsManager' in window)){
+    toast('Contact scan not supported in this browser.\nUse Chrome on Android.');
+    return;
+  }
+  try{
+    const props=['name','tel'];
+    const opts={multiple:true};
+    const results=await navigator.contacts.select(props,opts);
+    if(!results||results.length===0){toast('No contacts selected.');return;}
+    let added=0;
+    for(const r of results){
+      const name=(r.name&&r.name[0])||'Unknown';
+      const phone=(r.tel&&r.tel[0])||'';
+      if(!phone)continue;
+      // Skip if already exists
+      if(contacts.find(c=>c.phone.replace(/\D/g,'')===phone.replace(/\D/g,'')))continue;
+      const{data,error}=await sb.from('contacts').insert({owner_id:me.id,name,phone,photo:null,blocked:false}).select().single();
+      if(!error&&data){contacts.push(data);added++;}
+    }
+    renderContacts();renderSB();
+    toast(added>0?`${added} contact${added>1?'s':''} imported ✓`:'No new contacts to import.');
+  }catch(e){
+    toast('Contact scan cancelled or denied.');
+  }
+}
+
+// ══════ VOICE MESSAGES IN CHAT ══════
+let vmRec=null,vmChunks=[],vmTmr=null,vmSecs=0,vmBlob=null;
+const VM_MAX=60;
+
+function toggleVoiceMsg(){
+  const bar=document.getElementById('voice-msg-bar');
+  const inp=document.getElementById('msg-inp');
+  const sendBtn=document.getElementById('send-btn');
+  if(!bar)return;
+  const showing=bar.style.display!=='none'&&bar.style.display!=='';
+  if(showing){
+    bar.style.display='none';
+    inp.style.display='block';
+    sendBtn.style.display='flex';
+    vmReset();
+  }else{
+    bar.style.display='flex';
+    inp.style.display='none';
+    sendBtn.style.display='none';
+  }
+}
+
+function vmReset(){
+  clearInterval(vmTmr);
+  if(vmRec&&vmRec.state!=='inactive')vmRec.stop();
+  vmChunks=[];vmBlob=null;vmSecs=0;
+  const s=document.getElementById('vm-status');const t=document.getElementById('vm-timer');
+  const rb=document.getElementById('vm-rec-btn');const sb2=document.getElementById('vm-stop-btn');const send=document.getElementById('vm-send-btn');
+  if(s)s.textContent='Tap ⏺ to record (max 1 min)';
+  if(t){t.style.display='none';t.textContent='0s';}
+  if(rb)rb.style.display='inline-block';
+  if(sb2)sb2.style.display='none';
+  if(send)send.style.display='none';
+}
+
+function vmStart(){
+  if(!navigator.mediaDevices){toast('Microphone not available');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    vmChunks=[];vmBlob=null;vmSecs=0;
+    const rb=document.getElementById('vm-rec-btn');
+    const sb2=document.getElementById('vm-stop-btn');
+    const t=document.getElementById('vm-timer');
+    const s=document.getElementById('vm-status');
+    if(rb)rb.style.display='none';
+    if(sb2)sb2.style.display='inline-block';
+    if(t){t.style.display='inline';t.textContent='0s';}
+    if(s)s.textContent='Recording…';
+    vmRec=new MediaRecorder(stream);
+    vmRec.ondataavailable=e=>{if(e.data.size>0)vmChunks.push(e.data);};
+    vmRec.onstop=()=>{
+      vmBlob=new Blob(vmChunks,{type:'audio/webm'});
+      const send=document.getElementById('vm-send-btn');
+      const sb2=document.getElementById('vm-stop-btn');
+      const s=document.getElementById('vm-status');
+      if(send)send.style.display='inline-block';
+      if(sb2)sb2.style.display='none';
+      if(s)s.textContent=`${vmSecs}s — tap Send`;
+      stream.getTracks().forEach(t=>t.stop());
+    };
+    vmRec.start();
+    vmTmr=setInterval(()=>{
+      vmSecs++;
+      const t=document.getElementById('vm-timer');
+      if(t)t.textContent=vmSecs+'s';
+      if(vmSecs>=VM_MAX)vmStop();
+    },1000);
+  }).catch(()=>toast('Microphone access denied'));
+}
+
+function vmStop(){
+  clearInterval(vmTmr);
+  if(vmRec&&vmRec.state!=='inactive')vmRec.stop();
+  const rb=document.getElementById('vm-rec-btn');
+  if(rb)rb.style.display='inline-block';
+}
+
+async function vmSend(){
+  if(!vmBlob||!cur)return;
+  const dur=vmSecs;
+  // Convert blob to base64 to store (for now — backend storage via Supabase Storage is next step)
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const b64=e.target.result;
+    const time=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const tmpId='tmp'+Date.now();
+    if(!chats[cur.id])chats[cur.id]=[];
+    chats[cur.id].push({id:tmpId,from:'me',type:'voice',voiceData:b64,duration:dur,time});
+    renderMsgs();renderSB();
+    // Save to Supabase as voice type (voice_url will be base64 for now)
+    const{data}=await sb.from('messages').insert({
+      sender_id:me.id,receiver_id:cur.id,
+      text:'🎤 Voice message',type:'voice',voice_url:b64
+    }).select().single();
+    if(data){const m=chats[cur.id].find(x=>x.id===tmpId);if(m){m.id='m'+data.id;m.db_id=data.id;}}
+    toggleVoiceMsg();
+  };
+  reader.readAsDataURL(vmBlob);
+}
+
+
 function buildDialer(){
   const grid=document.getElementById('dial-grid');if(!grid||grid.childElementCount>0)return;
   [['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].forEach(([d,sub])=>{
