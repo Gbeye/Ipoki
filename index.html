@@ -286,7 +286,7 @@ button,input,textarea,select{font-family:var(--ff);}
 <div id="loading-overlay">
   <div style="font-size:32px;">📞</div>
   <div class="spin"></div>
-  <div style="color:var(--gold-b);font-size:13px;letter-spacing:1px;">Loading Poki…</div>
+  <div style="color:var(--gold-b);font-size:13px;letter-spacing:1px;">Loading Ipoki…</div>
 </div>
 
 <!-- AUTH -->
@@ -531,17 +531,17 @@ button,input,textarea,select{font-family:var(--ff);}
   <div class="modal">
     <div class="modal-title">🔔 Notification & Call Tones</div>
     <div class="tone-row">
-      <div><div class="tone-label">📞 Call Ringtone</div><div class="tone-sub" id="call-tone-name">Poki default</div></div>
+      <div><div class="tone-label">📞 Call Ringtone</div><div class="tone-sub" id="call-tone-name">Ipoki default</div></div>
       <button class="tone-pick-btn" onclick="document.getElementById('call-tone-inp').click()">Choose</button>
       <input type="file" id="call-tone-inp" accept="audio/*" style="display:none;" onchange="setTone('call',this)"/>
     </div>
     <div class="tone-row">
-      <div><div class="tone-label">💬 Message Tone</div><div class="tone-sub" id="msg-tone-name">Poki default</div></div>
+      <div><div class="tone-label">💬 Message Tone</div><div class="tone-sub" id="msg-tone-name">Ipoki default</div></div>
       <button class="tone-pick-btn" onclick="document.getElementById('msg-tone-inp').click()">Choose</button>
       <input type="file" id="msg-tone-inp" accept="audio/*" style="display:none;" onchange="setTone('msg',this)"/>
     </div>
     <div class="tone-row">
-      <div><div class="tone-label">🔔 Notification Tone</div><div class="tone-sub" id="notif-tone-name">Poki default</div></div>
+      <div><div class="tone-label">🔔 Notification Tone</div><div class="tone-sub" id="notif-tone-name">Ipoki default</div></div>
       <button class="tone-pick-btn" onclick="document.getElementById('notif-tone-inp').click()">Choose</button>
       <input type="file" id="notif-tone-inp" accept="audio/*" style="display:none;" onchange="setTone('notif',this)"/>
     </div>
@@ -637,7 +637,7 @@ function showAuth(page){
 
     signup:`<div class="acard">
       <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span></div>
-      <div class="atitle">Create Account</div><p class="asub">Join Poki</p>
+      <div class="atitle">Create Account</div><p class="asub">Join Ipoki</p>
       <div class="field">
         <div class="irow"><span class="iico">👤</span><input type="text" id="su-name" placeholder="Full Name" autocomplete="name"/></div>
         <div class="irow"><span class="iico">📧</span><input type="email" id="su-email" placeholder="Email address" autocomplete="email"/></div>
@@ -824,9 +824,9 @@ function subscribeMessages(userId){
 // ══════ INIT ══════
 function initApp(){
   updateSBMe();buildDialer();buildCalc();renderSB();go('empty');setSN('chats');
-  const ct=LS.g('pk_ct_name','Poki default');document.getElementById('call-tone-name').textContent=ct;
-  const mt=LS.g('pk_mt_name','Poki default');document.getElementById('msg-tone-name').textContent=mt;
-  const nt=LS.g('pk_nt_name','Poki default');document.getElementById('notif-tone-name').textContent=nt;
+  const ct=LS.g('pk_ct_name','Ipoki default');document.getElementById('call-tone-name').textContent=ct;
+  const mt=LS.g('pk_mt_name','Ipoki default');document.getElementById('msg-tone-name').textContent=mt;
+  const nt=LS.g('pk_nt_name','Ipoki default');document.getElementById('notif-tone-name').textContent=nt;
 }
 
 function updateSBMe(){
@@ -1128,11 +1128,11 @@ function subscribePresence(contactId){
 async function loadContactPresence(contactId){
   const st=document.getElementById('ct-status');
   if(!st)return;
-  // Default: show nothing — contact may not be a Poki user
+  // Default: show nothing — contact may not be a Ipoki user
   st.textContent='';
   if(!contactId)return;
   const {data,error}=await sb.from('profiles').select('is_online,last_seen').eq('id',contactId).single();
-  // If no profile found, this person is not on Poki — show nothing
+  // If no profile found, this person is not on Ipoki — show nothing
   if(error||!data){st.textContent='';return;}
   if(data.is_online){
     st.innerHTML=`<span class="presence-dot" style="background:var(--green);"></span>Online`;
@@ -1427,7 +1427,7 @@ function startRec(){
 }
 function stopRec(){clearInterval(recTmr);if(mediaRec&&mediaRec.state!=='inactive')mediaRec.stop();document.getElementById('rec-stop-btn').style.display='none';document.getElementById('rec-start-btn').style.display='inline-block';}
 function playRec(){if(!recAudio)return;recAudio.currentTime=0;recAudio.play();document.getElementById('rec-status').textContent='Playing…';recAudio.onended=()=>document.getElementById('rec-status').textContent='Playback done.';}
-function saveRec(){if(!recBlob)return;const url=URL.createObjectURL(recBlob);const a=document.createElement('a');a.href=url;a.download='poki-memo-'+Date.now()+'.webm';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('Recording saved 💾');}
+function saveRec(){if(!recBlob)return;const url=URL.createObjectURL(recBlob);const a=document.createElement('a');a.href=url;a.download='ipoki-memo-'+Date.now()+'.webm';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('Recording saved 💾');}
 
 // ══════ CALCULATOR ══════
 function buildCalc(){const grid=document.getElementById('calc-grid');if(!grid||grid.childElementCount>0)return;[['C','fn'],['±','fn'],['%','fn'],['÷','op'],['7','num'],['8','num'],['9','num'],['×','op'],['4','num'],['5','num'],['6','num'],['−','op'],['1','num'],['2','num'],['3','num'],['+','op'],['0','num zero'],['·','num'],['=','eq']].forEach(([k,cls])=>{const btn=document.createElement('button');btn.className='ckey '+cls;btn.textContent=k;btn.onclick=()=>calcKey(k);grid.appendChild(btn);});}
