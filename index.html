@@ -1834,23 +1834,21 @@ async function openAdmin(){
 function tNow(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
 function save(){} // Data is saved directly to Supabase now, this is a no-op kept for compatibility
 
-// ══════════════════════════════════════════════════════
-// BOOT
+/// ══════════════════════════════════════════════════════
+// BOOT (MOBILE DEBUG VERSION)
 // ══════════════════════════════════════════════════════
 (async () => {
   try {
     showLoading();
     
-    // 1. Fetch initial session
     const { data, error } = await sb.auth.getSession();
     if (error) throw error;
 
-    // 2. Load data if user exists
     if (data?.session?.user) {
       try {
         await loadAndInit(data.session.user);
       } catch (initErr) {
-        console.error('Initialization error during boot:', initErr);
+        alert('Init Error: ' + (initErr.message || JSON.stringify(initErr)));
         me = null;
         hideLoading();
         showAuth('splash');
@@ -1860,7 +1858,6 @@ function save(){} // Data is saved directly to Supabase now, this is a no-op kep
       showAuth('splash');
     }
 
-    // 3. Listen for future auth state changes
     sb.auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session?.user && !me) {
@@ -1874,7 +1871,7 @@ function save(){} // Data is saved directly to Supabase now, this is a no-op kep
           showAuth('forgot');
         }
       } catch (stateErr) {
-        console.error('Auth state change error:', stateErr);
+        alert('Auth Error: ' + (stateErr.message || JSON.stringify(stateErr)));
         me = null;
         hideLoading();
         showAuth('splash');
@@ -1882,7 +1879,7 @@ function save(){} // Data is saved directly to Supabase now, this is a no-op kep
     });
 
   } catch (e) {
-    console.error('Critical boot error:', e);
+    alert('Critical Error: ' + (e.message || JSON.stringify(e)));
     hideLoading();
     showAuth('splash');
   }
