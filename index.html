@@ -7,8 +7,13 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Poki"/>
-<title>Poki</title>
+<meta name="apple-mobile-web-app-title" content="Ipoki"/>
+<!-- Security headers via meta -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff"/>
+<meta http-equiv="X-Frame-Options" content="DENY"/>
+<title>Ipoki</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23B8860B'/><text y='72' x='50' text-anchor='middle' font-size='60'>📞</text></svg>"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23B8860B'/><text y='72' x='50' text-anchor='middle' font-size='60'>📞</text></svg>"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -49,6 +54,9 @@ button,input,textarea,select{font-family:var(--ff);}
 .afooter{text-align:center;margin-top:14px;font-size:13px;color:var(--sub);}
 .pp{width:76px;height:76px;border-radius:50%;background:var(--gold-muted);border:2px dashed var(--gold-border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;margin:0 auto 14px;overflow:hidden;}
 .pp img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+/* Password strength */
+.pw-strength{height:4px;border-radius:2px;margin-top:4px;transition:all .3s;}
+.pw-hint{font-size:11px;color:var(--sub);margin-top:3px;}
 
 /* ── SIDEBAR ── */
 #sidebar{width:280px;background:var(--sb);display:flex;flex-direction:column;border-right:1px solid #3A2E00;flex-shrink:0;transition:transform .25s ease;z-index:200;}
@@ -97,8 +105,8 @@ button,input,textarea,select{font-family:var(--ff);}
 .ibtn:active{background:var(--gold-muted);}
 
 /* ── HAMBURGER ── */
-#hamburger{display:none;position:fixed;top:10px;left:10px;z-index:300;background:var(--sb);border:none;border-radius:9px;width:38px;height:38px;font-size:18px;cursor:pointer;color:var(--sb-text);align-items:center;justify-content:center;}
-@media(max-width:680px){#hamburger{display:flex;}.topbar{padding-left:56px;}.chat-topbar{padding-left:56px;}}
+#hamburger{display:none;position:fixed;top:8px;left:8px;z-index:310;background:var(--sb);border:none;border-radius:9px;width:38px;height:38px;font-size:18px;cursor:pointer;color:var(--sb-text);align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+@media(max-width:680px){#hamburger{display:flex;}.topbar{padding-left:54px;}.chat-topbar{padding-left:54px;}}
 #sb-bd{display:none;position:fixed;inset:0;z-index:190;background:rgba(0,0,0,.5);}
 #sb-bd.show{display:block;}
 
@@ -126,13 +134,29 @@ button,input,textarea,select{font-family:var(--ff);}
 .bubble.them{background:#fff;color:var(--dark);border-radius:16px 16px 16px 3px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .mmeta{font-size:10px;color:var(--sub);margin-top:2px;}
 .mrow.me .mmeta{text-align:right;}
-.del-btn{display:none;background:var(--red);color:#fff;border:none;border-radius:7px;padding:3px 9px;font-size:11px;cursor:pointer;margin-top:2px;}
-.del-btn.show{display:inline-block;}
+.edited-label{font-size:9px;opacity:.7;margin-left:4px;font-style:italic;}
 .chat-bar{display:flex;align-items:center;padding:10px 12px;gap:8px;background:#fff;border-top:1.5px solid var(--border);flex-shrink:0;position:relative;z-index:1;}
 .chat-bar input{flex:1;border:1.5px solid var(--border);border-radius:22px;padding:10px 16px;font-size:14px;outline:none;background:var(--gold-bg);color:var(--dark);-webkit-appearance:none;appearance:none;min-width:0;display:block;width:100%;}
 .chat-bar input:focus{border-color:var(--gold);background:#fff;}
 .send-btn{width:40px;height:40px;min-width:40px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--gold-b),var(--gold));color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .send-btn:disabled{opacity:.3;}
+/* Voice message bar */
+#voice-msg-bar{display:none;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-top:1.5px solid var(--border);flex-shrink:0;}
+/* Voice bubbles */
+.vm-bubble{display:flex;align-items:center;gap:8px;padding:4px 2px;min-width:140px;}
+.vm-play-btn{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.vm-play-btn.me-btn{background:rgba(255,255,255,.25);color:#fff;}
+.vm-play-btn.them-btn{background:var(--gold);color:#fff;}
+.vm-wave{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3);}
+.vm-wave.them-wave{background:var(--gold-border);}
+.vm-dur{font-size:10px;opacity:.8;flex-shrink:0;}
+
+/* ── MESSAGE ACTION MENU ── */
+.msg-menu{position:fixed;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:350;overflow:hidden;min-width:190px;animation:slideUp .15s ease;}
+.msg-menu-btn{display:block;width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);text-align:left;cursor:pointer;font-size:13px;color:var(--dark);}
+.msg-menu-btn:last-child{border:none;}
+.msg-menu-btn:active{background:var(--gold-pale);}
+.msg-menu-btn.danger{color:var(--red);}
 
 /* ── CALLS ── */
 .filter-bar{display:flex;gap:7px;padding:12px 14px;flex-shrink:0;flex-wrap:wrap;}
@@ -178,17 +202,13 @@ button,input,textarea,select{font-family:var(--ff);}
 .notes-editor{flex:1;display:flex;flex-direction:column;padding:16px;min-width:0;}
 .notes-editor textarea{flex:1;border:none;outline:none;font-size:14px;color:var(--dark);background:transparent;resize:none;line-height:1.8;display:block;width:100%;min-height:0;}
 .notes-bar{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);flex-shrink:0;gap:8px;flex-wrap:wrap;}
-
-/* ── RECORDER ── */
 .recorder-box{background:var(--gold-pale);border:1.5px solid var(--gold-border);border-radius:12px;padding:12px;margin-top:8px;flex-shrink:0;}
-.rec-timer{font-size:22px;font-weight:700;text-align:center;color:var(--dark);font-variant-numeric:tabular-nums;}
 .rec-bar{display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap;}
 .rec-btn{padding:8px 16px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;}
 .rec-btn.start{background:var(--red);color:#fff;}
 .rec-btn.stop{background:#555;color:#fff;}
 .rec-btn.play{background:var(--gold);color:#fff;}
 .rec-btn.save{background:var(--green);color:#fff;}
-.rec-limit{font-size:11px;color:var(--sub);text-align:center;margin-top:6px;}
 
 /* ── CALCULATOR ── */
 #v-calculator{background:#140C00;align-items:center;justify-content:center;}
@@ -214,10 +234,10 @@ button,input,textarea,select{font-family:var(--ff);}
 .mcard-desc{font-size:11px;color:var(--sub);line-height:1.5;}
 
 /* ── CALL OVERLAY ── */
-#call-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:16px;}
+#call-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px;}
 #call-overlay.gone{display:none;}
 .call-modal{background:linear-gradient(160deg,#1E1600,#2E2000,#1A1000);border-radius:22px;padding:28px 20px;width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;gap:16px;border:1px solid #3A2800;}
-.call-pulse{position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(184,134,11,.3);animation:cp 2s infinite;}
+.call-pulse{position:absolute;inset:-10px;border-radius:50%;border:2px solid rgba(184,134,11,.3);animation:cp 2s infinite;}
 @keyframes cp{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:0}}
 .ctrl-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
 .ctrl{display:flex;flex-direction:column;align-items:center;gap:5px;}
@@ -234,6 +254,11 @@ button,input,textarea,select{font-family:var(--ff);}
 .icmsg.me{text-align:right;color:var(--gold-b);}
 .ic-bar{display:flex;gap:7px;margin-top:8px;}
 .ic-bar input{flex:1;background:rgba(255,255,255,.12);border:none;border-radius:7px;padding:8px 10px;color:#fff;font-size:13px;outline:none;-webkit-appearance:none;}
+
+/* ── INCOMING CALL OVERLAY ── */
+#incoming-overlay{position:fixed;inset:0;z-index:410;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:16px;}
+#incoming-overlay.gone{display:none;}
+.incoming-modal{background:linear-gradient(160deg,#1E1600,#2E2000);border-radius:22px;padding:32px 24px;width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center;gap:14px;border:1px solid #3A2800;}
 
 /* ── TONES MODAL ── */
 .modal-bg{position:fixed;inset:0;z-index:450;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;}
@@ -258,6 +283,15 @@ button,input,textarea,select{font-family:var(--ff);}
 #v-profile{overflow-y:auto;}
 .profile-box{background:#fff;border-radius:16px;padding:20px;border:1.5px solid var(--border);margin:16px;display:flex;flex-direction:column;gap:14px;}
 
+/* ── ADMIN ── */
+.admin-badge{background:linear-gradient(135deg,var(--gold-b),var(--gold));color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;}
+.admin-stat{background:#fff;border-radius:12px;padding:14px;border:1.5px solid var(--border);text-align:center;}
+.admin-stat-num{font-size:28px;font-weight:800;color:var(--gold);}
+.admin-stat-label{font-size:11px;color:var(--sub);margin-top:3px;}
+
+/* ── PRESENCE ── */
+.presence-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+
 /* ── TOAST ── */
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;font-size:13px;padding:9px 18px;border-radius:18px;z-index:600;display:none;white-space:nowrap;max-width:90vw;text-align:center;}
 
@@ -275,7 +309,7 @@ button,input,textarea,select{font-family:var(--ff);}
 <div id="loading-overlay">
   <div style="font-size:32px;">📞</div>
   <div class="spin"></div>
-  <div style="color:var(--gold-b);font-size:13px;letter-spacing:1px;">Loading Poki…</div>
+  <div style="color:var(--gold-b);font-size:13px;letter-spacing:1px;">Loading Ipoki…</div>
 </div>
 
 <!-- AUTH -->
@@ -285,7 +319,7 @@ button,input,textarea,select{font-family:var(--ff);}
 <div id="toast"></div>
 
 <!-- HAMBURGER -->
-<button id="hamburger" onclick="openSB()">☰</button>
+<button id="hamburger" onclick="hamburgerTap()">☰</button>
 <div id="sb-bd" onclick="closeSB()"></div>
 
 <!-- SIDEBAR -->
@@ -293,7 +327,7 @@ button,input,textarea,select{font-family:var(--ff);}
   <div class="sb-top">
     <div class="sb-brand">
       <div class="sb-brand-ic">📞</div>
-      <span class="sb-brand-nm">Poki</span>
+      <span class="sb-brand-nm">Ipoki</span>
     </div>
     <div class="sb-me" id="sb-me" onclick="go('profile');setSN('')">
       <div class="av" id="sb-av" style="width:32px;height:32px;font-size:12px;"></div>
@@ -324,7 +358,7 @@ button,input,textarea,select{font-family:var(--ff);}
 
   <div class="view active" id="v-empty">
     <div class="empty-icon">📞</div>
-    <div class="empty-title">Welcome to Poki</div>
+    <div class="empty-title">Welcome to Ipoki</div>
     <div class="empty-sub">Select a conversation or add a contact to begin</div>
   </div>
 
@@ -334,17 +368,25 @@ button,input,textarea,select{font-family:var(--ff);}
       <div class="av" id="ct-av" style="width:38px;height:38px;font-size:15px;"></div>
       <div style="flex:1;min-width:0;">
         <div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="ct-name"></div>
-        <div style="font-size:11px;color:var(--green);">● Online</div>
+        <div style="font-size:11px;color:var(--sub);" id="ct-status"></div>
       </div>
-      <button class="ibtn" onclick="doCall()" title="Call">📞</button>
+      <button class="ibtn" onclick="doCall()">📞</button>
       <button class="ibtn" id="btn-dc" style="color:var(--red);">🗑️</button>
     </div>
     <div class="msgs-area scroll" id="msgs"></div>
     <div class="chat-bar">
       <button class="ibtn" style="font-size:19px;flex-shrink:0;">😊</button>
       <input type="text" id="msg-inp" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()" oninput="toggleSend()"/>
-      <button class="ibtn" style="font-size:19px;flex-shrink:0;">🎤</button>
+      <button class="ibtn" style="font-size:19px;flex-shrink:0;" id="voice-msg-btn" onclick="toggleVoiceMsg()">🎤</button>
       <button class="send-btn" id="send-btn" onclick="sendMsg()" disabled>➤</button>
+    </div>
+    <div id="voice-msg-bar">
+      <div id="vm-status" style="flex:1;font-size:12px;color:var(--sub);">Tap ⏺ to record</div>
+      <div id="vm-timer" style="font-size:12px;font-weight:700;color:var(--red);display:none;">0s</div>
+      <button id="vm-rec-btn" onclick="vmStart()" style="background:var(--red);color:#fff;border:none;border-radius:18px;padding:6px 12px;font-size:12px;cursor:pointer;">⏺ Record</button>
+      <button id="vm-stop-btn" onclick="vmStop()" style="display:none;background:#555;color:#fff;border:none;border-radius:18px;padding:6px 12px;font-size:12px;cursor:pointer;">⏹ Stop</button>
+      <button id="vm-send-btn" onclick="vmSend()" style="display:none;background:var(--gold);color:#fff;border:none;border-radius:18px;padding:6px 12px;font-size:12px;cursor:pointer;">▶ Send</button>
+      <button onclick="toggleVoiceMsg()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--sub);">✕</button>
     </div>
   </div>
 
@@ -364,10 +406,11 @@ button,input,textarea,select{font-family:var(--ff);}
   <div class="view" id="v-contacts">
     <div class="topbar">
       <span class="topbar-title">Contacts</span>
-      <div class="irow" style="flex:0 0 auto;width:160px;padding:7px 11px;">
+      <div class="irow" style="flex:0 0 auto;width:130px;padding:7px 11px;">
         <span class="iico">🔍</span>
         <input type="text" id="c-search" placeholder="Search" oninput="renderContacts()" style="font-size:13px;"/>
       </div>
+      <button class="ibtn" onclick="scanPhoneContacts()" title="Import from phone" style="color:var(--blue);font-size:20px;">📲</button>
       <button class="ibtn" onclick="openAddC()" style="color:var(--gold);font-size:22px;font-weight:700;">＋</button>
     </div>
     <div class="contacts-grid" id="contacts-grid"></div>
@@ -405,7 +448,7 @@ button,input,textarea,select{font-family:var(--ff);}
     <div class="notes-layout">
       <div class="notes-sb">
         <div class="notes-sb-top">
-          <div class="irow" style="padding:6px 9px;">
+          <div class="irow" style="padding:7px 10px;">
             <span class="iico">🔍</span>
             <input type="text" id="note-q" placeholder="Search" oninput="renderNoteList()" style="font-size:12px;"/>
           </div>
@@ -415,21 +458,19 @@ button,input,textarea,select{font-family:var(--ff);}
       <div class="notes-editor">
         <textarea id="note-body" placeholder="Write your idea here…" oninput="autoSave()"></textarea>
         <div class="recorder-box" id="recorder-box">
-          <div style="font-size:12px;font-weight:600;color:var(--sub);margin-bottom:6px;">🎙️ Voice Recorder (max 1 min)</div>
-          <div class="rec-timer" id="rec-timer">0s / 60s</div>
+          <div style="font-size:11px;font-weight:600;color:var(--sub);margin-bottom:6px;">🎙️ Voice Memo (max 1 min)</div>
+          <div style="font-size:18px;font-weight:700;text-align:center;color:var(--dark);" id="rec-timer">0s / 60s</div>
           <div class="rec-bar">
             <button class="rec-btn start" id="rec-start-btn" onclick="startRec()">⏺ Record</button>
             <button class="rec-btn stop" id="rec-stop-btn" onclick="stopRec()" style="display:none;">⏹ Stop</button>
             <button class="rec-btn play" id="rec-play-btn" onclick="playRec()" style="display:none;">▶ Play</button>
             <button class="rec-btn save" id="rec-save-btn" onclick="saveRec()" style="display:none;">💾 Save to Phone</button>
           </div>
-          <div class="rec-limit" id="rec-status">Tap Record to start</div>
+          <div style="font-size:11px;color:var(--sub);text-align:center;margin-top:5px;" id="rec-status">Tap Record to start</div>
         </div>
         <div class="notes-bar">
           <span id="note-status" style="font-size:11px;color:var(--sub);">Auto-saved</span>
-          <div style="display:flex;gap:8px;">
-            <button onclick="delNote()" style="background:none;border:1.5px solid #fdd;color:var(--red);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;">🗑️ Delete Note</button>
-          </div>
+          <button onclick="delNote()" style="background:none;border:1.5px solid #fdd;color:var(--red);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:12px;">🗑️ Delete Note</button>
         </div>
       </div>
     </div>
@@ -454,8 +495,9 @@ button,input,textarea,select{font-family:var(--ff);}
       <div class="mcard" onclick="go('notes');setSN('notes')"><div class="mcard-icon">📝</div><div class="mcard-label">Notes</div><div class="mcard-desc">Ideas & voice memos</div></div>
       <div class="mcard" onclick="go('calculator');setSN('calc')"><div class="mcard-icon">🧮</div><div class="mcard-label">Calculator</div><div class="mcard-desc">Built-in calculator</div></div>
       <div class="mcard" onclick="go('blocked')"><div class="mcard-icon">🚫</div><div class="mcard-label">Blocked</div><div class="mcard-desc">Manage blocked contacts</div></div>
-      <div class="mcard" onclick="openTonesModal()"><div class="mcard-icon">🔔</div><div class="mcard-label">Tones</div><div class="mcard-desc">Set call & notification tones</div></div>
+      <div class="mcard" onclick="openTonesModal()"><div class="mcard-icon">🔔</div><div class="mcard-label">Tones</div><div class="mcard-desc">Call & message tones</div></div>
       <div class="mcard" onclick="logout()" style="border-color:#fdd;"><div class="mcard-icon">🚪</div><div class="mcard-label" style="color:var(--red);">Log Out</div><div class="mcard-desc">Sign out</div></div>
+      <div class="mcard" id="admin-card" style="display:none;border-color:var(--gold-border);background:var(--gold-pale);" onclick="openAdmin()"><div class="mcard-icon">🛡️</div><div class="mcard-label">Admin Panel</div><div class="mcard-desc">Manage users & app</div></div>
     </div>
   </div>
 
@@ -474,10 +516,27 @@ button,input,textarea,select{font-family:var(--ff);}
     <div class="profile-box" id="profile-box"></div>
   </div>
 
-</div>
-</div>
+  <!-- ADMIN -->
+  <div class="view" id="v-admin">
+    <div class="topbar">
+      <button class="ibtn" onclick="go('more')" style="font-size:22px;">‹</button>
+      <span class="topbar-title">Admin Panel <span class="admin-badge">ADMIN</span></span>
+    </div>
+    <div style="padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <div class="admin-stat"><div class="admin-stat-num" id="adm-users">—</div><div class="admin-stat-label">Users</div></div>
+        <div class="admin-stat"><div class="admin-stat-num" id="adm-msgs">—</div><div class="admin-stat-label">Messages</div></div>
+        <div class="admin-stat"><div class="admin-stat-num" id="adm-notes">—</div><div class="admin-stat-label">Notes</div></div>
+      </div>
+      <div style="font-weight:700;font-size:14px;">All Users</div>
+      <div id="adm-user-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+  </div>
 
-<!-- CALL OVERLAY -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ACTIVE CALL OVERLAY -->
 <div id="call-overlay" class="gone">
   <div class="call-modal">
     <div style="position:relative;">
@@ -485,8 +544,9 @@ button,input,textarea,select{font-family:var(--ff);}
       <div class="av" id="call-av" style="width:78px;height:78px;font-size:30px;position:relative;z-index:1;"></div>
     </div>
     <div style="font-size:20px;font-weight:700;color:#fff;" id="call-cname"></div>
-    <div style="color:var(--gold-b);font-size:13px;letter-spacing:2px;" id="call-timer">00:00</div>
-    <div class="ctrl-row">
+    <div id="call-state-label" style="color:var(--sub);font-size:12px;letter-spacing:1px;">Ringing…</div>
+    <div style="color:var(--gold-b);font-size:13px;letter-spacing:2px;display:none;" id="call-timer">00:00</div>
+    <div class="ctrl-row" id="call-controls" style="opacity:.4;pointer-events:none;">
       <div class="ctrl"><button class="ctrl-c dim" id="c-mute" onclick="tMute()">🎙️</button><span class="ctrl-label">Mute</span></div>
       <div class="ctrl"><button class="ctrl-c dim" id="c-spk" onclick="tSpk()">🔈</button><span class="ctrl-label">Speaker</span></div>
       <div class="ctrl"><button class="ctrl-c dim" id="c-rec" onclick="tRec()">⏺️</button><span class="ctrl-label">Record</span></div>
@@ -505,22 +565,44 @@ button,input,textarea,select{font-family:var(--ff);}
   </div>
 </div>
 
+<!-- INCOMING CALL OVERLAY -->
+<div id="incoming-overlay" class="gone">
+  <div class="incoming-modal">
+    <div style="font-size:13px;color:var(--sub);letter-spacing:1px;">Incoming Call</div>
+    <div style="position:relative;">
+      <div class="call-pulse"></div>
+      <div class="av" id="inc-av" style="width:80px;height:80px;font-size:30px;position:relative;z-index:1;"></div>
+    </div>
+    <div style="font-size:20px;font-weight:700;color:#fff;" id="inc-name"></div>
+    <div style="display:flex;gap:32px;margin-top:8px;">
+      <div style="text-align:center;">
+        <button onclick="rejectCall()" style="width:60px;height:60px;border-radius:50%;background:var(--red);border:none;font-size:24px;cursor:pointer;">📵</button>
+        <div style="color:#888;font-size:11px;margin-top:6px;">Decline</div>
+      </div>
+      <div style="text-align:center;">
+        <button onclick="acceptCall()" style="width:60px;height:60px;border-radius:50%;background:var(--green);border:none;font-size:24px;cursor:pointer;">📞</button>
+        <div style="color:#888;font-size:11px;margin-top:6px;">Accept</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TONES MODAL -->
 <div class="modal-bg gone" id="tones-modal">
   <div class="modal">
     <div class="modal-title">🔔 Notification & Call Tones</div>
     <div class="tone-row">
-      <div><div class="tone-label">📞 Call Ringtone</div><div class="tone-sub" id="call-tone-name">Poki default</div></div>
+      <div><div class="tone-label">📞 Call Ringtone</div><div class="tone-sub" id="call-tone-name">Ipoki default</div></div>
       <button class="tone-pick-btn" onclick="document.getElementById('call-tone-inp').click()">Choose</button>
       <input type="file" id="call-tone-inp" accept="audio/*" style="display:none;" onchange="setTone('call',this)"/>
     </div>
     <div class="tone-row">
-      <div><div class="tone-label">💬 Message Tone</div><div class="tone-sub" id="msg-tone-name">Poki default</div></div>
+      <div><div class="tone-label">💬 Message Tone</div><div class="tone-sub" id="msg-tone-name">Ipoki default</div></div>
       <button class="tone-pick-btn" onclick="document.getElementById('msg-tone-inp').click()">Choose</button>
       <input type="file" id="msg-tone-inp" accept="audio/*" style="display:none;" onchange="setTone('msg',this)"/>
     </div>
     <div class="tone-row">
-      <div><div class="tone-label">🔔 Notification Tone</div><div class="tone-sub" id="notif-tone-name">Poki default</div></div>
+      <div><div class="tone-label">🔔 Notification Tone</div><div class="tone-sub" id="notif-tone-name">Ipoki default</div></div>
       <button class="tone-pick-btn" onclick="document.getElementById('notif-tone-inp').click()">Choose</button>
       <input type="file" id="notif-tone-inp" accept="audio/*" style="display:none;" onchange="setTone('notif',this)"/>
     </div>
@@ -539,9 +621,9 @@ button,input,textarea,select{font-family:var(--ff);}
         <img id="c-pprev" src="" style="display:none;width:100%;height:100%;object-fit:cover;"/>
       </div>
       <input type="file" id="c-pi" accept="image/*" style="display:none;" onchange="prevCP(this)"/>
-      <div class="irow"><span class="iico">👤</span><input type="text" id="c-name" placeholder="Full Name"/></div>
-      <div class="irow"><span class="iico">📞</span><input type="text" id="c-phone" placeholder="Phone number"/></div>
-      <div class="err" id="c-err">Name and phone are required.</div>
+      <div class="irow"><span class="iico">👤</span><input type="text" id="c-name" placeholder="Full Name" maxlength="60"/></div>
+      <div class="irow"><span class="iico">📞</span><input type="tel" id="c-phone" placeholder="Phone number" maxlength="20"/></div>
+      <div class="err" id="c-err"></div>
     </div>
     <div class="modal-acts">
       <button class="btn-cancel" onclick="closeCM()">Cancel</button>
@@ -551,200 +633,293 @@ button,input,textarea,select{font-family:var(--ff);}
 </div>
 
 <script>
+'use strict';
 
-// ══════════════════════════════════════════════
-// SUPABASE + CONFIG
-// ══════════════════════════════════════════════
-const SURL='https://zfyzhyguijegbqrzuzww.supabase.co';
-const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmeXpoeWd1aWplZ2Jxcnp1end3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NDg5MzAsImV4cCI6MjA5NTAyNDkzMH0.CWsrAPI76L2N4sLJK9RH67owv4FiswZubAgXVTJEiAs';
-const sb=supabase.createClient(SURL,SKEY);
+// ══════════════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════════════
+const SURL = 'https://zfyzhyguijegbqrzuzww.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmeXpoeWd1aWplZ2Jxcnp1end3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NDg5MzAsImV4cCI6MjA5NTAyNDkzMH0.CWsrAPI76L2N4sLJK9RH67owv4FiswZubAgXVTJEiAs';
+const sb = supabase.createClient(SURL, SKEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
 
-// ⚠️ Replace with your actual email
-const ADMIN_EMAIL='jtamunogbeye@gmail.com';
-function isAdmin(){return me&&me.email===ADMIN_EMAIL;}
+// ══════════════════════════════════════════════════════
+// ADMIN — CHANGE THIS TO YOUR EMAIL
+// ══════════════════════════════════════════════════════
+const ADMIN_EMAIL = 'jtamunogbeye@gmail.com';
+function isAdmin(){ return me && me.email === ADMIN_EMAIL; }
 
-// TURN servers for reliable calls on all networks including Airtel/Glo
-const ICE_SERVERS={iceServers:[
-  {urls:'stun:stun.l.google.com:19302'},
-  {urls:'stun:stun1.l.google.com:19302'},
-  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
-]};
+// ══════════════════════════════════════════════════════
+// SECURITY HELPERS
+// ══════════════════════════════════════════════════════
+// Sanitize all user content before inserting into DOM
+function esc(s){
+  return String(s||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;');
+}
 
-// Rate limiting
-const loginAttempts={count:0,lockUntil:0};
-function checkRateLimit(){const now=Date.now();if(loginAttempts.lockUntil>now){const s=Math.ceil((loginAttempts.lockUntil-now)/1000);return`Too many attempts. Wait ${s}s.`;}return null;}
-function recordFailedLogin(){loginAttempts.count++;if(loginAttempts.count>=5){loginAttempts.lockUntil=Date.now()+60000;loginAttempts.count=0;}}
-function clearLoginAttempts(){loginAttempts.count=0;loginAttempts.lockUntil=0;}
+// Validate inputs
+function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+function isValidPhone(p){ return /^[\d\s\+\-\(\)]{7,20}$/.test(p.trim()); }
 
-// XSS sanitizer
-function sanitize(s){return String(s||'').replace(/[<>"'`]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Password strength check
+function pwStrength(pw){
+  let score=0;
+  if(pw.length>=8)score++;
+  if(pw.length>=12)score++;
+  if(/[A-Z]/.test(pw))score++;
+  if(/[0-9]/.test(pw))score++;
+  if(/[^A-Za-z0-9]/.test(pw))score++;
+  return score; // 0-5
+}
 
-// Password strength
-function pwStrength(pw){let s=0;if(pw.length>=8)s++;if(pw.length>=12)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;return s;}
-function showPwStrength(pw){const bar=document.getElementById('pw-bar');const hint=document.getElementById('pw-hint');if(!bar||!hint)return;const s=pwStrength(pw);const colors=['#E03E3E','#E03E3E','#F0A500','#2ECC78','#16A34A'];const labels=['Very weak','Weak','Fair','Strong','Very strong'];bar.style.width=(s/5*100)+'%';bar.style.background=colors[Math.min(s,4)];hint.textContent=pw?labels[Math.min(s,4)]:'';}
+// Rate limiting — track login attempts in memory
+const loginAttempts={count:0,lastTime:0};
+function checkRateLimit(){
+  const now=Date.now();
+  if(now-loginAttempts.lastTime>60000)loginAttempts.count=0;
+  loginAttempts.lastTime=now;
+  loginAttempts.count++;
+  if(loginAttempts.count>5){
+    const wait=Math.ceil((60000-(now-loginAttempts.lastTime))/1000);
+    throw new Error(`Too many attempts. Please wait ${wait} seconds.`);
+  }
+}
 
-// ══════════════════════════════════════════════
+// Local storage helper (non-sensitive data only)
+const LS={
+  g:(k,d)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d;}catch{return d;}},
+  s:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}},
+  r:(k)=>{try{localStorage.removeItem(k);}catch{}},
+};
+
+// ══════════════════════════════════════════════════════
 // STATE
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 let me=null,contacts=[],chats={},callLog=[],notes=[];
 let cur=null,curScreen='empty',curTab='chats',callFilter='all';
 let curNoteId=null,editCId=null,cPhotoData=null;
 let callTmr=null,callSecs=0,muted=false,speaker=false,recording=false,chatOpen=false;
-let callConnected=false,ringTmr=null;
 let dialNum='';
 let calc={d:'0',p:null,op:null,r:false,e:''};
-let noteTmr=null,realtimeSub=null,sigSub=null,presenceSub=null;
-let peerConn=null,localStream=null,incomingData=null;
+let noteTmr=null;
+let realtimeSub=null,presenceSub=null;
 let vmRec=null,vmChunks=[],vmTmr=null,vmSecs=0,vmBlob=null;
 const VM_MAX=60;
 let mediaRec=null,recChunks=[],recTmr=null,recSecs=0,recBlob=null,recAudio=null;
 const REC_MAX=60;
-let msgMenuEl=null;
-const vmStore={};
+let msgMenuOpen=null;
+// WebRTC state
+let pc=null,localStream=null,callChannel=null,incomingCallerId=null;
+const RTC_CONFIG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 
-const LS={
-  g:(k,d)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):d;}catch{return d;}},
-  s:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}},
-};
+// ══════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════
+function toast(msg,ms=2500){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',ms);}
 
-// ══════════════════════════════════════════════
-// UTILS
-// ══════════════════════════════════════════════
-function toast(msg,ms=2800){const el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',ms);}
-function showLoading(){document.getElementById('loading-overlay').classList.remove('gone');}
-function hideLoading(){document.getElementById('loading-overlay').classList.add('gone');}
-function tNow(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
-function timeSince(d){const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return'just now';const m=Math.floor(s/60);if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+// ══════════════════════════════════════════════════════
+// LOADING
+// ══════════════════════════════════════════════════════
+function showLoading(){const el=document.getElementById('loading-overlay');if(el)el.classList.remove('gone');}
+function hideLoading(){const el=document.getElementById('loading-overlay');if(el)el.classList.add('gone');}
 
-// ══════════════════════════════════════════════
-// AUTH UI
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// AUTH SCREENS
+// ══════════════════════════════════════════════════════
 function showAuth(page){
   document.getElementById('auth-layer').classList.remove('gone');
-  hideLoading();
   const T={
     splash:`<div class="acard" style="text-align:center;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;"><div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;">
+        <div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span>
+      </div>
       <p style="color:var(--sub);font-size:14px;line-height:1.8;margin-bottom:26px;">Simple communication.<br>Pure connection. No distractions.</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <button class="bp" onclick="showAuth('login')">Log In</button>
         <button class="bp" style="background:linear-gradient(135deg,#3A2E00,#2A2000);" onclick="showAuth('signup')">Create Account</button>
         <button class="bg" onclick="showAuth('forgot')" style="margin-top:4px;">Forgot Password?</button>
       </div></div>`,
+
     login:`<div class="acard">
       <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span></div>
       <div class="atitle">Welcome back</div><p class="asub">Sign in to continue</p>
       <div class="field">
-        <div class="irow"><span class="iico">📧</span><input type="email" id="l-email" placeholder="Email address" autocomplete="email"/></div>
-        <div class="irow"><span class="iico">🔒</span><input type="password" id="l-pw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password"/></div>
+        <div class="irow"><span class="iico">📧</span><input type="email" id="l-email" placeholder="Email address" autocomplete="email" maxlength="100"/></div>
+        <div class="irow"><span class="iico">🔒</span><input type="password" id="l-pw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password" maxlength="128"/></div>
         <div class="err" id="l-err"></div>
         <div style="text-align:right;"><button class="bg" onclick="showAuth('forgot')">Forgot password?</button></div>
       </div>
       <button class="bp" id="l-btn" onclick="doLogin()">Log In</button>
       <div class="afooter">No account? <button class="bg" onclick="showAuth('signup')">Sign Up</button></div></div>`,
+
     signup:`<div class="acard">
       <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span></div>
       <div class="atitle">Create Account</div><p class="asub">Join Ipoki</p>
+      <div class="pp" id="su-pp" onclick="document.getElementById('su-pi').click()">
+        <span id="su-pph" style="font-size:24px;">👤</span><span style="font-size:9px;color:var(--sub);">Add photo</span>
+        <img id="su-pprev" src="" style="display:none;width:100%;height:100%;object-fit:cover;"/>
+      </div>
+      <input type="file" id="su-pi" accept="image/*" style="display:none;" onchange="prevSUP(this)"/>
       <div class="field">
-        <div class="irow"><span class="iico">👤</span><input type="text" id="su-name" placeholder="Full Name" autocomplete="name"/></div>
-        <div class="irow"><span class="iico">📧</span><input type="email" id="su-email" placeholder="Email address" autocomplete="email"/></div>
-        <div class="irow"><span class="iico">📞</span><input type="tel" id="su-phone" placeholder="Phone number" autocomplete="tel"/></div>
-        <div class="irow"><span class="iico">🔒</span><input type="password" id="su-pw" placeholder="Password (min 8 chars)" autocomplete="new-password" oninput="showPwStrength(this.value)"/></div>
-        <div style="height:4px;border-radius:2px;background:var(--border);margin-top:4px;transition:all .3s;" id="pw-bar"></div>
-        <div style="font-size:11px;color:var(--sub);" id="pw-hint"></div>
-        <div class="irow"><span class="iico">🔒</span><input type="password" id="su-cpw" placeholder="Confirm Password" onkeydown="if(event.key==='Enter')doSignup()" autocomplete="new-password"/></div>
+        <div class="irow"><span class="iico">👤</span><input type="text" id="su-name" placeholder="Full Name" autocomplete="name" maxlength="60"/></div>
+        <div class="irow"><span class="iico">📧</span><input type="email" id="su-email" placeholder="Email address" autocomplete="email" maxlength="100"/></div>
+        <div class="irow"><span class="iico">📞</span><input type="tel" id="su-phone" placeholder="Phone number" autocomplete="tel" maxlength="20"/></div>
+        <div class="irow"><span class="iico">🔒</span><input type="password" id="su-pw" placeholder="Password (min 8 chars)" autocomplete="new-password" maxlength="128" oninput="checkPwStrength(this.value)"/></div>
+        <div id="pw-strength-bar" class="pw-strength" style="background:var(--border);"></div>
+        <div id="pw-hint" class="pw-hint"></div>
+        <div class="irow"><span class="iico">🔒</span><input type="password" id="su-cpw" placeholder="Confirm Password" onkeydown="if(event.key==='Enter')doSignup()" autocomplete="new-password" maxlength="128"/></div>
         <div class="err" id="su-err"></div>
       </div>
       <button class="bp" id="su-btn" onclick="doSignup()">Create Account</button>
       <p style="text-align:center;font-size:11px;color:var(--sub);margin-top:8px;">By signing up you agree to our Terms &amp; Privacy Policy</p>
       <div class="afooter">Have account? <button class="bg" onclick="showAuth('login')">Log In</button></div></div>`,
+
     forgot:`<div class="acard">
       <div class="alogo"><div class="alogo-ic">📞</div><span class="alogo-nm">Ipoki</span></div>
       <div class="atitle">Reset Password</div><p class="asub">Enter your registered email</p>
       <div class="field">
-        <div class="irow"><span class="iico">📧</span><input type="email" id="f-email" placeholder="Email address"/></div>
+        <div class="irow"><span class="iico">📧</span><input type="email" id="f-email" placeholder="Email address" maxlength="100"/></div>
         <div class="err" id="f-err"></div>
-        <div id="f-ok" style="color:var(--green);background:#f0fff4;font-size:12px;padding:6px 10px;border-radius:8px;display:none;">Reset email sent! Check your inbox.</div>
+        <div id="f-ok" style="display:none;color:var(--green);font-size:13px;padding:8px;background:#f0fdf4;border-radius:8px;">✓ Reset link sent! Check your email.</div>
       </div>
       <button class="bp" id="f-btn" onclick="doForgot()">Send Reset Link</button>
-      <div class="afooter"><button class="bg" onclick="showAuth('login')">← Back</button></div></div>`,
+      <div class="afooter"><button class="bg" onclick="showAuth('login')">← Back to login</button></div></div>`,
   };
   document.getElementById('auth-wrap').innerHTML=T[page]||T.splash;
 }
 
-function showErr(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),5000);}
+function prevSUP(inp){
+  const f=inp.files[0];if(!f)return;
+  if(f.size>2*1024*1024){toast('Photo must be under 2MB');return;}
+  const r=new FileReader();
+  r.onload=e=>{
+    LS.s('pk_pp',e.target.result);
+    const pv=document.getElementById('su-pprev');const ph=document.getElementById('su-pph');
+    if(pv){pv.src=e.target.result;pv.style.display='block';}
+    if(ph)ph.style.display='none';
+  };
+  r.readAsDataURL(f);
+}
 
-// ══════════════════════════════════════════════
-// SUPABASE AUTH
-// ══════════════════════════════════════════════
+function checkPwStrength(pw){
+  const score=pwStrength(pw);
+  const bar=document.getElementById('pw-strength-bar');
+  const hint=document.getElementById('pw-hint');
+  if(!bar||!hint)return;
+  const colors=['#E03E3E','#E03E3E','#F0A500','#E8A800','#2ECC78'];
+  const labels=['Very weak','Weak','Fair','Good','Strong'];
+  bar.style.background=colors[Math.max(0,score-1)]||'var(--border)';
+  bar.style.width=(score*20)+'%';
+  hint.textContent=pw.length?labels[Math.max(0,score-1)]:'';
+  hint.style.color=colors[Math.max(0,score-1)]||'var(--sub)';
+}
+
+function showErr(id,msg){
+  const el=typeof id==='string'?document.getElementById(id):id;
+  if(!el)return;
+  el.textContent=esc(msg);el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),5000);
+}
+
 async function doSignup(){
-  const name=sanitize((document.getElementById('su-name')?.value||'').trim());
+  const name=(document.getElementById('su-name')?.value||'').trim();
   const email=(document.getElementById('su-email')?.value||'').trim().toLowerCase();
-  const phone=sanitize((document.getElementById('su-phone')?.value||'').trim());
+  const phone=(document.getElementById('su-phone')?.value||'').trim();
   const pw=document.getElementById('su-pw')?.value||'';
   const cpw=document.getElementById('su-cpw')?.value||'';
+
+  // Validate
   if(!name||!email||!phone||!pw){showErr('su-err','All fields are required.');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('su-err','Enter a valid email address.');return;}
-  if(pw.length<8){showErr('su-err','Password must be at least 8 characters.');return;}
-  if(pwStrength(pw)<2){showErr('su-err','Password too weak. Add uppercase, numbers or symbols.');return;}
+  if(!isValidEmail(email)){showErr('su-err','Please enter a valid email address.');return;}
+  if(!isValidPhone(phone)){showErr('su-err','Please enter a valid phone number.');return;}
+  if(pwStrength(pw)<3){showErr('su-err','Password is too weak. Use 8+ chars with numbers and capitals.');return;}
   if(pw!==cpw){showErr('su-err','Passwords do not match.');return;}
+
   const btn=document.getElementById('su-btn');
   if(btn){btn.disabled=true;btn.textContent='Creating…';}
-  const {data,error}=await sb.auth.signUp({email,password:pw,options:{data:{name,phone}}});
+  const {data,error}=await sb.auth.signUp({
+    email, password:pw,
+    options:{data:{name,phone}}
+  });
   if(error){showErr('su-err',error.message);if(btn){btn.disabled=false;btn.textContent='Create Account';}return;}
-  if(data.user){await sb.from('profiles').upsert({id:data.user.id,name,phone,photo:null});}
+  if(data.user){
+    await sb.from('profiles').upsert({id:data.user.id,name:sanitizeText(name),phone:sanitizeText(phone),photo:LS.g('pk_pp',null)});
+  }
+  LS.r('pk_pp');
   toast('Account created! Check your email to confirm, then log in.');
   showAuth('login');
 }
 
 async function doLogin(){
-  const rateLimitMsg=checkRateLimit();
-  if(rateLimitMsg){showErr('l-err',rateLimitMsg);return;}
   const email=(document.getElementById('l-email')?.value||'').trim().toLowerCase();
   const pw=document.getElementById('l-pw')?.value||'';
   if(!email||!pw){showErr('l-err','Please fill both fields.');return;}
+  if(!isValidEmail(email)){showErr('l-err','Please enter a valid email.');return;}
+
+  // Rate limiting
+  try{checkRateLimit();}catch(e){showErr('l-err',e.message);return;}
+
   const btn=document.getElementById('l-btn');
   if(btn){btn.disabled=true;btn.textContent='Logging in…';}
   const {data,error}=await sb.auth.signInWithPassword({email,password:pw});
-  if(error){recordFailedLogin();showErr('l-err','Invalid email or password.');if(btn){btn.disabled=false;btn.textContent='Log In';}return;}
-  clearLoginAttempts();
+  if(error){
+    showErr('l-err','Incorrect email or password.');  // Don't reveal which is wrong
+    if(btn){btn.disabled=false;btn.textContent='Log In';}
+    return;
+  }
   await loadAndInit(data.user);
 }
 
 async function doForgot(){
   const email=(document.getElementById('f-email')?.value||'').trim().toLowerCase();
-  if(!email){showErr('f-err','Please enter your email.');return;}
+  if(!email||!isValidEmail(email)){showErr('f-err','Please enter a valid email.');return;}
   const btn=document.getElementById('f-btn');
   if(btn){btn.disabled=true;btn.textContent='Sending…';}
-  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://gbeye.github.io/Ipoki/'});
-  if(error){showErr('f-err',error.message);if(btn){btn.disabled=false;btn.textContent='Send Reset Link';}return;}
-  const ok=document.getElementById('f-ok');if(ok)ok.style.display='block';
+  // Always show success — don't reveal if email exists (security)
+  await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://gbeye.github.io/Ipoki/'});
+  const ok=document.getElementById('f-ok');
+  if(ok)ok.style.display='block';
+  if(btn){btn.disabled=false;btn.textContent='Send Reset Link';}
 }
 
 async function logout(){
   if(!confirm('Log out?'))return;
   await setOnline(false);
   if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null;}
-  if(sigSub){sb.removeChannel(sigSub);sigSub=null;}
   if(presenceSub){sb.removeChannel(presenceSub);presenceSub=null;}
-  cleanupWebRTC();
+  if(callChannel){sb.removeChannel(callChannel);callChannel=null;}
+  closeWebRTC();
   await sb.auth.signOut();
   me=null;contacts=[];chats={};callLog=[];notes=[];cur=null;
   showAuth('splash');
 }
 
-// ══════════════════════════════════════════════
-// LOAD DATA
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// TEXT SANITIZATION
+// ══════════════════════════════════════════════════════
+function sanitizeText(s){
+  return String(s||'').trim().slice(0,2000);
+}
+
+// ══════════════════════════════════════════════════════
+// LOAD DATA FROM SUPABASE
+// ══════════════════════════════════════════════════════
 async function loadAndInit(user){
   showLoading();
   let {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
   if(!prof){
     const meta=user.user_metadata||{};
-    await sb.from('profiles').upsert({id:user.id,name:meta.name||user.email,phone:meta.phone||''});
+    await sb.from('profiles').upsert({id:user.id,name:sanitizeText(meta.name||user.email),phone:sanitizeText(meta.phone||'')});
     prof={id:user.id,name:meta.name||user.email,phone:meta.phone||'',photo:null};
   }
   me={id:user.id,email:user.email,...prof};
@@ -757,62 +932,48 @@ async function loadAndInit(user){
     .order('created_at',{ascending:true});
   chats={};
   (mData||[]).forEach(m=>{
-    const oid=m.sender_id===user.id?m.receiver_id:m.sender_id;
-    if(!chats[oid])chats[oid]=[];
-    chats[oid].push({
+    const otherId=m.sender_id===user.id?m.receiver_id:m.sender_id;
+    if(!chats[otherId])chats[otherId]=[];
+    chats[otherId].push({
       id:'m'+m.id,db_id:m.id,
       from:m.sender_id===user.id?'me':'them',
-      text:m.text||'',
-      type:m.type||'text',
-      voiceUrl:m.voice_url||null,
-      duration:m.duration||0,
+      text:m.text||'',type:m.type||'text',
+      voiceData:m.voice_url||null,duration:m.duration||0,
       edited:m.edited||false,
       sentAt:new Date(m.created_at).getTime(),
       time:new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
     });
   });
 
-  const {data:clData}=await sb.from('call_log').select('*').eq('caller_id',user.id).order('created_at',{ascending:false});
-  callLog=(clData||[]).map(cl=>({id:'cl'+cl.id,db_id:cl.id,contactId:cl.contact_id,number:cl.number,type:cl.type,time:new Date(cl.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}));
+  const {data:clData}=await sb.from('call_log').select('*').eq('caller_id',user.id).order('created_at',{ascending:false}).limit(100);
+  callLog=(clData||[]).map(cl=>({
+    id:'cl'+cl.id,db_id:cl.id,contactId:cl.contact_id,
+    number:cl.number,type:cl.type,
+    time:new Date(cl.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+  }));
 
   const {data:nData}=await sb.from('notes').select('*').eq('owner_id',user.id).order('updated_at',{ascending:false});
   notes=(nData||[]).map(n=>({id:n.id,title:n.title||'Untitled',body:n.body||'',time:new Date(n.updated_at).toLocaleString()}));
   curNoteId=notes[0]?.id||null;
 
-  // Subscribe to everything
   subscribeMessages(user.id);
   subscribeSignaling(user.id);
   setOnline(true);
+
   window.addEventListener('beforeunload',()=>setOnline(false));
-  document.addEventListener('visibilitychange',()=>setOnline(document.visibilityState==='visible'));
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')setOnline(true);
+    else setOnline(false);
+  });
 
   document.getElementById('auth-layer').classList.add('gone');
   hideLoading();
   initApp();
 }
 
-function initApp(){
-  updateSBMe();buildDialer();buildCalc();renderSB();go('empty');setSN('chats');
-  document.getElementById('call-tone-name').textContent=LS.g('pk_ct_name','Ipoki default');
-  document.getElementById('msg-tone-name').textContent=LS.g('pk_mt_name','Ipoki default');
-  document.getElementById('notif-tone-name').textContent=LS.g('pk_nt_name','Ipoki default');
-  const ac=document.getElementById('admin-card');
-  if(ac)ac.style.display=isAdmin()?'flex':'none';
-}
-
-function updateSBMe(){
-  if(!me)return;
-  const nm=document.getElementById('sb-nm');
-  const ph=document.getElementById('sb-ph');
-  const av=document.getElementById('sb-av');
-  if(nm)nm.innerHTML=esc(me.name)+(isAdmin()?'&nbsp;<span style="background:linear-gradient(135deg,var(--gold-b),var(--gold));color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px;">ADMIN</span>':'');
-  if(ph)ph.textContent=me.phone||me.email;
-  if(av){av.innerHTML=me.photo?`<img src="${me.photo}"/>`:esc(me.name.charAt(0).toUpperCase());av.style.fontSize=me.photo?'0':'12px';}
-}
-
-// ══════════════════════════════════════════════
-// REALTIME: Messages
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// REALTIME — MESSAGES
+// ══════════════════════════════════════════════════════
 function subscribeMessages(userId){
   if(realtimeSub){sb.removeChannel(realtimeSub);}
   realtimeSub=sb.channel('msgs-'+userId)
@@ -820,294 +981,321 @@ function subscribeMessages(userId){
       const m=payload.new;
       const sid=m.sender_id;
       if(!chats[sid])chats[sid]=[];
-      chats[sid].push({id:'m'+m.id,db_id:m.id,from:'them',text:m.text||'',type:m.type||'text',voiceUrl:m.voice_url||null,duration:m.duration||0,edited:false,sentAt:new Date(m.created_at).getTime(),time:new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+      chats[sid].push({
+        id:'m'+m.id,db_id:m.id,from:'them',
+        text:m.text||'',type:m.type||'text',
+        voiceData:m.voice_url||null,duration:m.duration||0,
+        sentAt:new Date(m.created_at).getTime(),
+        time:new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+      });
       if(cur&&cur.id===sid)renderMsgs();
       renderSB();
-      const senderName=contacts.find(c=>c.id===sid)?.name||'Someone';
-      toast(m.type==='voice'?`🎤 Voice message from ${senderName}`:`💬 ${senderName}: ${(m.text||'').slice(0,40)}`);
+      toast('💬 '+(contacts.find(c=>c.id===sid)?.name||'New message'));
     })
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},payload=>{
       const m=payload.new;
-      const oid=m.sender_id===userId?m.receiver_id:m.sender_id;
-      if(chats[oid]){const msg=chats[oid].find(x=>x.db_id===m.id);if(msg){msg.text=m.text;msg.edited=true;if(cur&&cur.id===oid)renderMsgs();}}
+      const otherId=m.sender_id===me.id?m.receiver_id:m.sender_id;
+      const msgs=chats[otherId]||[];
+      const existing=msgs.find(x=>x.db_id===m.id);
+      if(existing){existing.text=m.text||'';existing.edited=m.edited||false;}
+      if(cur&&(cur.id===otherId))renderMsgs();
     })
     .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},payload=>{
-      const id=payload.old?.id;if(!id)return;
-      Object.keys(chats).forEach(cid=>{chats[cid]=(chats[cid]||[]).filter(m=>m.db_id!==id);});
+      const id=payload.old.id;
+      Object.keys(chats).forEach(cid=>{
+        chats[cid]=chats[cid].filter(m=>m.db_id!==id);
+      });
       if(cur)renderMsgs();
+      renderSB();
     })
     .subscribe();
 }
 
-// ══════════════════════════════════════════════
-// PRESENCE
-// ══════════════════════════════════════════════
-async function setOnline(online){
-  if(!me)return;
-  try{await sb.from('profiles').update({is_online:online,last_seen:new Date().toISOString()}).eq('id',me.id);}catch(e){}
-}
-
-async function loadPresence(contactId){
-  const st=document.getElementById('ct-status');if(!st)return;st.textContent='';
-  const {data,error}=await sb.from('profiles').select('is_online,last_seen').eq('id',contactId).single();
-  if(error||!data){st.textContent='';return;}
-  if(data.is_online){st.innerHTML='<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:3px;vertical-align:middle;"></span>Online';st.style.color='var(--green)';}
-  else if(data.last_seen){st.innerHTML=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sub);margin-right:3px;vertical-align:middle;"></span>Last seen ${timeSince(data.last_seen)}`;st.style.color='var(--sub)';}
-}
-
-// ══════════════════════════════════════════════
-// WEBRTC SIGNALING via call_signals table
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// WEBRTC — REAL VOICE CALLS
+// ══════════════════════════════════════════════════════
 function subscribeSignaling(userId){
-  if(sigSub){sb.removeChannel(sigSub);}
-  sigSub=sb.channel('sig-'+userId)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_signals',filter:`to_id=eq.${userId}`},
-      async payload=>{
-        const sig=payload.new;
-        const type=sig.type;
-        const data=sig.payload;
-
-        if(type==='offer'){
-          // Incoming call
-          incomingData={from:sig.from_id,offer:data.offer,sigId:sig.id};
-          const caller=contacts.find(c=>c.id===sig.from_id);
-          const callerProf=caller||{name:'Unknown caller',photo:null};
-          showIncomingCall(callerProf);
-        }
-        else if(type==='answer'&&peerConn){
-          await peerConn.setRemoteDescription(new RTCSessionDescription(data.answer));
-          onCallConnected();
-        }
-        else if(type==='ice'&&peerConn&&data.candidate){
-          try{await peerConn.addIceCandidate(new RTCIceCandidate(data.candidate));}catch(e){}
-        }
-        else if(type==='end'){
-          if(document.getElementById('incoming-overlay')&&!document.getElementById('incoming-overlay').classList.contains('gone')){
-            document.getElementById('incoming-overlay').classList.add('gone');
-            incomingData=null;
-          } else {
-            endCall(false);
-            toast('Call ended by other person');
-          }
-        }
-        else if(type==='reject'){
-          endCall(false);
-          toast('Call declined');
-        }
-      })
+  // Listen for signaling messages via Supabase Realtime channel
+  if(callChannel){sb.removeChannel(callChannel);}
+  callChannel=sb.channel('webrtc-'+userId)
+    .on('broadcast',{event:'offer'},async({payload})=>{
+      // Incoming call offer
+      if(payload.to!==me.id)return;
+      const callerContact=contacts.find(c=>c.id===payload.from)||{id:payload.from,name:payload.fromName||'Unknown',photo:null};
+      incomingCallerId=payload.from;
+      showIncomingCall(callerContact,payload.offer);
+    })
+    .on('broadcast',{event:'answer'},async({payload})=>{
+      if(payload.to!==me.id||!pc)return;
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.answer));
+    })
+    .on('broadcast',{event:'ice'},async({payload})=>{
+      if(payload.to!==me.id||!pc)return;
+      try{await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));}catch(e){}
+    })
+    .on('broadcast',{event:'hangup'},({payload})=>{
+      if(payload.to!==me.id)return;
+      endCall();
+      toast('Call ended');
+    })
+    .on('broadcast',{event:'reject'},({payload})=>{
+      if(payload.to!==me.id)return;
+      endCall();
+      toast(payload.fromName+' declined the call');
+    })
     .subscribe();
 }
 
-async function sendSignal(toId,type,payload){
-  await sb.from('call_signals').insert({from_id:me.id,to_id:toId,type,payload});
+async function sendSignal(event,toId,data){
+  await sb.channel('webrtc-'+toId).send({type:'broadcast',event,payload:{to:toId,from:me.id,fromName:me.name,...data}});
 }
 
-function cleanupWebRTC(){
-  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
-  if(peerConn){peerConn.close();peerConn=null;}
-  const audio=document.getElementById('remote-audio');if(audio)audio.remove();
-}
+async function startWebRTCCall(contactId){
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    pc=new RTCPeerConnection(RTC_CONFIG);
+    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
 
-async function startWebRTCAsCallerTo(targetUserId){
-  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
-  catch(e){toast('Microphone access denied. Cannot make calls.');return false;}
-  peerConn=new RTCPeerConnection(ICE_SERVERS);
-  localStream.getTracks().forEach(t=>peerConn.addTrack(t,localStream));
-  peerConn.ontrack=handleRemoteTrack;
-  peerConn.onicecandidate=async e=>{
-    if(e.candidate){await sendSignal(targetUserId,'ice',{candidate:e.candidate.toJSON()});}
-  };
-  peerConn.onconnectionstatechange=()=>{
-    if(peerConn.connectionState==='disconnected'||peerConn.connectionState==='failed'){endCall(true);}
-  };
-  const offer=await peerConn.createOffer({offerToReceiveAudio:true});
-  await peerConn.setLocalDescription(offer);
-  await sendSignal(targetUserId,'offer',{offer:{type:offer.type,sdp:offer.sdp}});
-  return true;
-}
+    pc.ontrack=e=>{
+      const remoteAudio=document.getElementById('remote-audio')||createAudioEl();
+      remoteAudio.srcObject=e.streams[0];
+    };
+    pc.onicecandidate=e=>{
+      if(e.candidate)sendSignal('ice',contactId,{candidate:e.candidate});
+    };
+    pc.onconnectionstatechange=()=>{
+      if(pc.connectionState==='connected')callAnswered();
+      if(['disconnected','failed','closed'].includes(pc.connectionState))endCall();
+    };
 
-function handleRemoteTrack(e){
-  let audio=document.getElementById('remote-audio');
-  if(!audio){audio=document.createElement('audio');audio.id='remote-audio';audio.autoplay=true;audio.setAttribute('playsinline','');document.body.appendChild(audio);}
-  if(e.streams&&e.streams[0])audio.srcObject=e.streams[0];
-}
-
-function showIncomingCall(contact){
-  const ov=document.getElementById('incoming-overlay');if(!ov)return;
-  const av=document.getElementById('inc-av');const nm=document.getElementById('inc-name');const ph=document.getElementById('inc-phone');
-  if(av)setAv(av,contact,78);
-  if(nm)nm.textContent=esc(contact.name);
-  if(ph)ph.textContent='Ipoki Voice Call';
-  ov.classList.remove('gone');
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await sendSignal('offer',contactId,{offer});
+  }catch(e){
+    toast('Could not access microphone: '+e.message);
+    closeWebRTC();
+  }
 }
 
 async function acceptCall(){
   document.getElementById('incoming-overlay').classList.add('gone');
-  if(!incomingData){return;}
-  const {from,offer}=incomingData;
-  try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
-  catch(e){toast('Microphone access denied.');incomingData=null;return;}
-  peerConn=new RTCPeerConnection(ICE_SERVERS);
-  localStream.getTracks().forEach(t=>peerConn.addTrack(t,localStream));
-  peerConn.ontrack=handleRemoteTrack;
-  peerConn.onicecandidate=async e=>{
-    if(e.candidate){await sendSignal(from,'ice',{candidate:e.candidate.toJSON()});}
-  };
-  peerConn.onconnectionstatechange=()=>{
-    if(peerConn.connectionState==='disconnected'||peerConn.connectionState==='failed'){endCall(true);}
-  };
-  await peerConn.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer=await peerConn.createAnswer();
-  await peerConn.setLocalDescription(answer);
-  await sendSignal(from,'answer',{answer:{type:answer.type,sdp:answer.sdp}});
-  // Show call overlay
-  const callerContact=contacts.find(c=>c.id===from)||{name:'Unknown',photo:null};
-  cur=callerContact;
-  showCallOverlay(callerContact);
-  // Log as received
-  await sb.from('call_log').insert({caller_id:me.id,contact_id:from,number:'',type:'received'});
-  callLog.unshift({id:'cl'+Date.now(),contactId:from,number:'',type:'received',time:tNow()});
-  renderSB();
-  onCallConnected();
-  incomingData=null;
-}
+  if(!incomingCallerId)return;
+  const callerId=incomingCallerId;
 
-async function declineCall(){
-  document.getElementById('incoming-overlay').classList.add('gone');
-  if(incomingData){
-    await sendSignal(incomingData.from,'reject',{});
-    // Log as missed for caller
-    incomingData=null;
+  // Log as received
+  const {data}=await sb.from('call_log').insert({caller_id:me.id,contact_id:callerId,number:'',type:'received'}).select().single();
+  if(data)callLog.unshift({id:'cl'+data.id,db_id:data.id,contactId:callerId,type:'received',time:tNow()});
+
+  // Set up peer as answer side
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    pc=new RTCPeerConnection(RTC_CONFIG);
+    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+    pc.ontrack=e=>{
+      const remoteAudio=document.getElementById('remote-audio')||createAudioEl();
+      remoteAudio.srcObject=e.streams[0];
+    };
+    pc.onicecandidate=e=>{
+      if(e.candidate)sendSignal('ice',callerId,{candidate:e.candidate});
+    };
+    pc.onconnectionstatechange=()=>{
+      if(pc.connectionState==='connected')callAnswered();
+      if(['disconnected','failed','closed'].includes(pc.connectionState))endCall();
+    };
+
+    // Get the stored offer
+    const pendingOffer=window._pendingOffer;
+    if(pendingOffer){
+      await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer));
+      const answer=await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await sendSignal('answer',callerId,{answer});
+    }
+
+    // Show active call UI
+    const c=contacts.find(x=>x.id===callerId)||{name:'Unknown',photo:null};
+    cur=c;
+    showCallUI(c);
+  }catch(e){
+    toast('Could not connect call: '+e.message);
+    closeWebRTC();
   }
 }
 
-function showCallOverlay(c){
-  const ov=document.getElementById('call-overlay');if(!ov)return;
-  setAv(document.getElementById('call-av'),c,78);
-  document.getElementById('call-cname').textContent=esc(c.name);
-  document.getElementById('call-state').textContent='Ringing…';
-  document.getElementById('call-state').style.color='var(--sb-sub)';
-  document.getElementById('call-timer').style.display='none';
-  const cr=document.getElementById('ctrl-row');
-  if(cr){cr.style.opacity='.4';cr.style.pointerEvents='none';}
-  ['c-mute','c-spk','c-rec','c-cht'].forEach(id=>{const b=document.getElementById(id);if(b)b.className='ctrl-c dim';});
-  document.getElementById('c-mute').textContent='🎙️';
-  document.getElementById('c-spk').textContent='🔈';
-  document.getElementById('rec-badge').style.display='none';
-  document.getElementById('ic-box').style.display='none';
-  callConnected=false;callSecs=0;
-  ov.classList.remove('gone');
+function rejectCall(){
+  document.getElementById('incoming-overlay').classList.add('gone');
+  if(incomingCallerId)sendSignal('reject',incomingCallerId,{});
+  incomingCallerId=null;
 }
 
-function onCallConnected(){
-  callConnected=true;
-  document.getElementById('call-state').textContent='Connected';
-  document.getElementById('call-state').style.color='var(--green)';
-  document.getElementById('call-timer').style.display='block';
-  const cr=document.getElementById('ctrl-row');
-  if(cr){cr.style.opacity='1';cr.style.pointerEvents='auto';}
-  if(callTmr)clearInterval(callTmr);
-  callSecs=0;
-  callTmr=setInterval(()=>{callSecs++;const t=document.getElementById('call-timer');if(t)t.textContent=String(Math.floor(callSecs/60)).padStart(2,'0')+':'+String(callSecs%60).padStart(2,'0');},1000);
+function showIncomingCall(c,offer){
+  window._pendingOffer=offer;
+  setAv(document.getElementById('inc-av'),c,80);
+  document.getElementById('inc-name').textContent=c.name;
+  document.getElementById('incoming-overlay').classList.remove('gone');
 }
 
-async function endCall(notifyOther=true){
-  clearInterval(callTmr);clearInterval(ringTmr);callTmr=null;
-  if(notifyOther&&cur){try{await sendSignal(cur.id,'end',{});}catch(e){}}
-  cleanupWebRTC();
-  document.getElementById('call-overlay').classList.add('gone');
-  callConnected=false;
-  document.getElementById('call-state').textContent='Ringing…';
-  document.getElementById('call-state').style.color='';
-  document.getElementById('call-timer').style.display='none';
-  const cr=document.getElementById('ctrl-row');
-  if(cr){cr.style.opacity='.4';cr.style.pointerEvents='none';}
+function createAudioEl(){
+  const a=document.createElement('audio');
+  a.id='remote-audio';a.autoplay=true;
+  document.body.appendChild(a);
+  return a;
 }
 
-// ══════════════════════════════════════════════
-// NAV
-// ══════════════════════════════════════════════
+function closeWebRTC(){
+  if(localStream)localStream.getTracks().forEach(t=>t.stop());
+  if(pc){pc.close();pc=null;}
+  localStream=null;window._pendingOffer=null;incomingCallerId=null;
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+function initApp(){
+  updateSBMe();buildDialer();buildCalc();renderSB();go('empty');setSN('chats');
+  const ct=LS.g('pk_ct','Ipoki default');if(document.getElementById('call-tone-name'))document.getElementById('call-tone-name').textContent=ct;
+  const mt=LS.g('pk_mt','Ipoki default');if(document.getElementById('msg-tone-name'))document.getElementById('msg-tone-name').textContent=mt;
+  const nt=LS.g('pk_nt','Ipoki default');if(document.getElementById('notif-tone-name'))document.getElementById('notif-tone-name').textContent=nt;
+  const ac=document.getElementById('admin-card');if(ac)ac.style.display=isAdmin()?'flex':'none';
+  const nmEl=document.getElementById('sb-nm');
+  if(nmEl&&isAdmin())nmEl.innerHTML=esc(me.name)+'&nbsp;<span class="admin-badge">ADMIN</span>';
+}
+
+function updateSBMe(){
+  if(!me)return;
+  document.getElementById('sb-nm').textContent=me.name;
+  document.getElementById('sb-ph').textContent=me.phone||'';
+  const av=document.getElementById('sb-av');
+  if(av){av.innerHTML=me.photo?`<img src="${me.photo}"/>`:me.name.charAt(0).toUpperCase();av.style.fontSize=me.photo?'0':'12px';}
+}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
 const BACK_SCREENS=['chat','profile','blocked','calls','contacts','dialer','notes','calculator','more','admin'];
 function hamburgerTap(){
   if(BACK_SCREENS.includes(curScreen)){
     const map={chat:'empty',profile:'more',blocked:'more',calls:'empty',contacts:'empty',dialer:'empty',notes:'empty',calculator:'empty',more:'empty',admin:'more'};
     go(map[curScreen]||'empty');setSN('chats');
-  }else{openSB();}
+  }else openSB();
 }
 function updateHamburger(){
   const btn=document.getElementById('hamburger');if(!btn)return;
   btn.textContent=BACK_SCREENS.includes(curScreen)?'‹':'☰';
   btn.style.fontSize=BACK_SCREENS.includes(curScreen)?'26px':'18px';
 }
-function go(scr){
+
+function go(screen){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  const el=document.getElementById('v-'+scr);if(el)el.classList.add('active');
-  curScreen=scr;closeSB();updateHamburger();
-  if(scr==='calls')renderCalls();
-  if(scr==='contacts')renderContacts();
-  if(scr==='blocked')renderBlocked();
-  if(scr==='notes'){renderNoteList();if(curNoteId)loadNote(curNoteId);else if(notes.length)loadNote(notes[0].id);}
-  if(scr==='chat')renderMsgs();
-  if(scr==='profile')renderProfile();
-  if(scr==='admin')renderAdmin();
+  const el=document.getElementById('v-'+screen);if(el)el.classList.add('active');
+  curScreen=screen;closeSB();updateHamburger();
+  if(screen==='calls')renderCalls();
+  if(screen==='contacts')renderContacts();
+  if(screen==='blocked')renderBlocked();
+  if(screen==='notes'){renderNoteList();if(curNoteId)loadNote(curNoteId);else if(notes.length)loadNote(notes[0].id);}
+  if(screen==='chat')renderMsgs();
+  if(screen==='profile')renderProfile();
+  if(screen==='admin')openAdmin();
 }
 function setSN(id){document.querySelectorAll('.snav').forEach(b=>b.classList.remove('active'));const b=document.getElementById('sn-'+id);if(b)b.classList.add('active');}
 function swTab(tab){curTab=tab;document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));document.getElementById('stab-'+tab)?.classList.add('active');renderSB();}
 function openSB(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-bd').classList.add('show');}
 function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-bd').classList.remove('show');}
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // AVATAR
-// ══════════════════════════════════════════════
-function avH(c,sz){const fs=c?.photo?0:sz*0.38;return`<div class="av" style="width:${sz}px;height:${sz}px;font-size:${fs}px;">${c?.photo?`<img src="${c.photo}"/>`:esc((c?.name?.charAt(0)||'?').toUpperCase())}</div>`;}
-function setAv(el,c,sz){if(!el||!c)return;el.style.width=sz+'px';el.style.height=sz+'px';el.innerHTML=c.photo?`<img src="${c.photo}"/>`:esc(c.name.charAt(0).toUpperCase());el.style.fontSize=c.photo?'0':(sz*0.38)+'px';}
+// ══════════════════════════════════════════════════════
+function avH(c,sz){
+  const content=c?.photo?`<img src="${c.photo}"/>`:esc((c?.name?.charAt(0)||'?').toUpperCase());
+  return `<div class="av" style="width:${sz}px;height:${sz}px;font-size:${c?.photo?0:sz*0.38}px;">${content}</div>`;
+}
+function setAv(el,c,sz){
+  if(!el||!c)return;
+  el.style.width=sz+'px';el.style.height=sz+'px';
+  el.innerHTML=c.photo?`<img src="${c.photo}"/>`:esc(c.name.charAt(0).toUpperCase());
+  el.style.fontSize=c.photo?'0':(sz*0.38)+'px';
+}
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // SIDEBAR
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function renderSB(){
   const q=(document.getElementById('sb-q')?.value||'').toLowerCase();
   const list=document.getElementById('sb-list');if(!list)return;
   if(curTab==='chats'){
     const items=contacts.filter(c=>!c.blocked&&(chats[c.id]||[]).length>0&&c.name.toLowerCase().includes(q));
-    list.innerHTML=items.length?items.map(c=>{const msgs=chats[c.id]||[];const last=msgs[msgs.length-1];
-      const preview=last?.type==='voice'?'🎤 Voice message':esc(last?.text||'');
-      return`<div class="li ${cur?.id===c.id?'active':''}" onclick="openChat('${c.id}')">${avH(c,34)}<div style="flex:1;min-width:0;"><div class="li-name">${esc(c.name)}</div><div class="li-sub">${preview}</div></div><span class="li-time">${last?.time||''}</span></div>`;
-    }).join(''):`<p style="text-align:center;color:var(--sb-sub);padding:20px;font-size:12px;">No chats yet.<br>Go to Contacts.</p>`;
+    list.innerHTML=items.length?items.map(c=>{
+      const msgs=chats[c.id]||[];const last=msgs[msgs.length-1];
+      return `<div class="li ${cur?.id===c.id?'active':''}" onclick="openChat('${c.id}')">${avH(c,34)}<div style="flex:1;min-width:0;"><div class="li-name">${esc(c.name)}</div><div class="li-sub">${esc(last?.text||'')}</div></div><span class="li-time">${last?.time||''}</span></div>`;
+    }).join(''):`<p style="text-align:center;color:var(--sb-sub);padding:20px;font-size:12px;">No chats yet.<br>Go to Contacts to start.</p>`;
   }else if(curTab==='calls'){
     const cc={received:'#2ECC78',dialed:'#2563EB',missed:'#E03E3E'};
     const ic={received:'📲',dialed:'📤',missed:'📵'};
     const items=callLog.filter(cl=>{const c=contacts.find(x=>x.id===cl.contactId);return(c&&c.name.toLowerCase().includes(q))||(cl.number&&cl.number.includes(q));});
-    list.innerHTML=items.length?items.map(cl=>{const c=contacts.find(x=>x.id===cl.contactId)||{name:cl.number||'Unknown',photo:null};
-      return`<div class="li" onclick="startCallFor('${cl.contactId||''}')">${avH(c,34)}<div style="flex:1;min-width:0;"><div class="li-name" style="color:${cl.type==='missed'?'#E03E3E':'var(--sb-text)'};">${esc(c.name)}</div><div class="li-sub" style="color:${cc[cl.type]};">${ic[cl.type]} ${cl.type} · ${cl.time}</div></div></div>`;
+    list.innerHTML=items.length?items.map(cl=>{
+      const c=contacts.find(x=>x.id===cl.contactId)||{name:cl.number||'Unknown',photo:null};
+      return `<div class="li" onclick="startCallFor('${cl.contactId||''}')">${avH(c,34)}<div style="flex:1;min-width:0;"><div class="li-name" style="color:${cl.type==='missed'?'#E03E3E':'var(--sb-text)'};">${esc(c.name)}</div><div class="li-sub" style="color:${cc[cl.type]};">${ic[cl.type]} ${cl.type} · ${cl.time}</div></div></div>`;
     }).join(''):`<p style="text-align:center;color:var(--sb-sub);padding:20px;font-size:12px;">No calls yet</p>`;
   }else{
     const items=contacts.filter(c=>!c.blocked&&c.name.toLowerCase().includes(q));
-    list.innerHTML=items.length?items.map(c=>`<div class="li ${cur?.id===c.id?'active':''}" onclick="openChat('${c.id}')">${avH(c,34)}<div style="flex:1;min-width:0;"><div class="li-name">${esc(c.name)}</div><div class="li-sub">${esc(c.phone)}</div></div></div>`).join(''):`<p style="text-align:center;color:var(--sb-sub);padding:20px;font-size:12px;">No contacts</p>`;
+    list.innerHTML=items.length?items.map(c=>`<div class="li ${cur?.id===c.id?'active':''}" onclick="openChat('${c.id}')">${avH(c,34)}<div style="flex:1;min-width:0;"><div class="li-name">${esc(c.name)}</div><div class="li-sub">${esc(c.phone)}</div></div></div>`).join(''):`<p style="text-align:center;color:var(--sb-sub);padding:20px;font-size:12px;">No contacts yet</p>`;
   }
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// PRESENCE
+// ══════════════════════════════════════════════════════
+async function setOnline(isOnline){
+  if(!me)return;
+  await sb.from('profiles').update({is_online:isOnline,last_seen:new Date().toISOString()}).eq('id',me.id);
+}
+
+async function loadContactPresence(contactId){
+  const st=document.getElementById('ct-status');if(!st)return;
+  st.textContent='';
+  const {data,error}=await sb.from('profiles').select('is_online,last_seen').eq('id',contactId).single();
+  if(error||!data){st.textContent='';return;}
+  if(data.is_online){
+    st.innerHTML=`<span class="presence-dot" style="background:var(--green);"></span>Online`;
+    st.style.color='var(--green)';
+  }else{
+    const ago=data.last_seen?timeSince(new Date(data.last_seen)):'';
+    st.innerHTML=ago?`<span class="presence-dot" style="background:var(--sub);"></span>Last seen ${ago}`:'';
+    st.style.color='var(--sub)';
+  }
+}
+
+function timeSince(date){
+  const s=Math.floor((Date.now()-date)/1000);
+  if(s<60)return 'just now';
+  const m=Math.floor(s/60);if(m<60)return m+'m ago';
+  const h=Math.floor(m/60);if(h<24)return h+'h ago';
+  return Math.floor(h/24)+'d ago';
+}
+
+// ══════════════════════════════════════════════════════
 // CHAT
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function openChat(id){
   cur=contacts.find(c=>c.id===id);if(!cur)return;
   if(!chats[id])chats[id]=[];
   setAv(document.getElementById('ct-av'),cur,38);
-  document.getElementById('ct-name').textContent=esc(cur.name);
+  document.getElementById('ct-name').textContent=cur.name;
   document.getElementById('ct-status').textContent='';
-  document.getElementById('btn-dc').onclick=()=>{if(confirm('Delete this entire chat?'))deleteChat(id);};
+  document.getElementById('btn-dc').onclick=()=>{if(confirm('Delete this chat?')){deleteChat(id);}};
   swTab('chats');setSN('chats');go('chat');renderSB();
-  loadPresence(id);
+  loadContactPresence(id);
   // Reset voice bar
-  const vb=document.getElementById('vm-bar');if(vb)vb.style.display='none';
-  const mi=document.getElementById('msg-inp');if(mi){mi.style.display='block';mi.value='';}
-  const sb2=document.getElementById('send-btn');if(sb2){sb2.style.display='flex';sb2.disabled=true;}
+  const bar=document.getElementById('voice-msg-bar');if(bar)bar.style.display='none';
+  const inp=document.getElementById('msg-inp');if(inp)inp.style.display='block';
+  const sb2=document.getElementById('send-btn');if(sb2)sb2.style.display='flex';
+  vmReset();
 }
 
 async function deleteChat(id){
+  // Delete from Supabase — delete messages where both parties are involved
   await sb.from('messages').delete().or(`and(sender_id.eq.${me.id},receiver_id.eq.${id}),and(sender_id.eq.${id},receiver_id.eq.${me.id})`);
-  chats[id]=[];renderSB();go('empty');
+  chats[id]=[];save();renderSB();go('empty');
 }
 
 function renderMsgs(){
@@ -1116,174 +1304,152 @@ function renderMsgs(){
   const msgs=chats[cur.id]||[];
   box.innerHTML=`<div class="date-badge">Today</div>`+msgs.map(m=>{
     const isVoice=m.type==='voice';
-    const edited=m.edited?`<span style="font-size:9px;opacity:.7;margin-left:3px;font-style:italic;">edited</span>`:'';
+    const editedLabel=m.edited?`<span class="edited-label">edited</span>`:'';
     const content=isVoice
-      ?`<div style="display:flex;align-items:center;gap:8px;min-width:140px;">
-          <button style="width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;font-size:13px;background:${m.from==='me'?'rgba(255,255,255,.25)':'var(--gold)'};color:#fff;" onclick="playVM('${m.id}',this)">▶</button>
-          <div style="flex:1;height:3px;border-radius:2px;background:${m.from==='me'?'rgba(255,255,255,.3)':'var(--gold-border)'};"></div>
-          <span style="font-size:11px;opacity:.8;">${m.duration||0}s</span>
-        </div>`
-      :esc(m.text||'')+edited;
-    return`<div class="mrow ${m.from}" id="mr-${m.id}"><div>
-      <div class="bubble ${m.from}" onclick="msgMenu(event,'${m.id}')">${content}</div>
-      <div class="mmeta">${m.time}${m.from==='me'?' ✓✓':''}</div>
-    </div></div>`;
+      ?`<div class="vm-bubble"><button class="vm-play-btn ${m.from==='me'?'me-btn':'them-btn'}" onclick="playVoiceMsg('${m.id}',this)">▶</button><div class="vm-wave ${m.from==='them'?'them-wave':''}"></div><span class="vm-dur">${m.duration||0}s</span></div>`
+      :esc(m.text||'')+editedLabel;
+    return `<div class="mrow ${m.from}" id="mr-${m.id}"><div><div class="bubble ${m.from}" onclick="showMsgMenu(event,'${m.id}')">${content}</div><div class="mmeta">${m.time}${m.from==='me'?' ✓✓':''}</div></div></div>`;
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
 
-async function playVM(id,btn){
-  const msg=(chats[cur?.id]||[]).find(m=>m.id===id);if(!msg)return;
-  // If we have it cached play it
-  if(vmStore[id]){const a=vmStore[id];if(a.paused){a.currentTime=0;a.play();btn.textContent='⏸';}else{a.pause();btn.textContent='▶';}a.onended=()=>{btn.textContent='▶';};return;}
-  // Otherwise load from URL
-  const url=msg.voiceUrl;if(!url){toast('Voice message unavailable');return;}
-  const audio=new Audio(url);vmStore[id]=audio;audio.play();btn.textContent='⏸';
-  audio.onended=()=>{btn.textContent='▶';};
-}
-
-// Message context menu
-function msgMenu(e,id){
+// Message action menu
+function showMsgMenu(e,id){
   e.stopPropagation();
-  if(msgMenuEl){msgMenuEl.remove();msgMenuEl=null;}
+  if(msgMenuOpen){msgMenuOpen.remove();msgMenuOpen=null;}
   const msg=(chats[cur?.id]||[]).find(m=>m.id===id);if(!msg)return;
   const isMe=msg.from==='me';
   const age=Date.now()-(msg.sentAt||0);
   const canEdit=isMe&&age<5*60*1000&&msg.type!=='voice';
   const canDelAll=isMe&&age<10*60*1000;
-  let html='';
-  if(canEdit)html+=`<button class="mmb" onclick="editMsg('${id}')">✏️ Edit</button>`;
-  html+=`<button class="mmb danger" onclick="delFor('${id}','me')">🗑️ Delete for me</button>`;
-  if(canDelAll)html+=`<button class="mmb danger" onclick="delFor('${id}','all')">🗑️ Delete for everyone</button>`;
-  if(!html)return;
   const menu=document.createElement('div');
   menu.className='msg-menu';
   const rect=e.currentTarget.getBoundingClientRect();
-  menu.style.top=Math.min(rect.bottom+4,window.innerHeight-150)+'px';
+  menu.style.top=Math.min(rect.bottom+4,window.innerHeight-160)+'px';
   menu.style[isMe?'right':'left']='14px';
+  let html='';
+  if(canEdit)html+=`<button class="msg-menu-btn" onclick="editMsg('${id}')">✏️ Edit</button>`;
+  html+=`<button class="msg-menu-btn danger" onclick="delMsgFor('${id}','me')">🗑️ Delete for me</button>`;
+  if(canDelAll)html+=`<button class="msg-menu-btn danger" onclick="delMsgFor('${id}','everyone')">🗑️ Delete for everyone</button>`;
   menu.innerHTML=html;
-  document.body.appendChild(menu);msgMenuEl=menu;
-  setTimeout(()=>document.addEventListener('click',()=>{if(msgMenuEl){msgMenuEl.remove();msgMenuEl=null;}},{once:true}),100);
+  document.body.appendChild(menu);msgMenuOpen=menu;
+  setTimeout(()=>document.addEventListener('click',()=>{if(msgMenuOpen){msgMenuOpen.remove();msgMenuOpen=null;}},{once:true}),100);
 }
 
-function editMsg(id){
-  if(msgMenuEl){msgMenuEl.remove();msgMenuEl=null;}
-  const msg=(chats[cur?.id]||[]).find(m=>m.id===id);if(!msg)return;
-  const nv=prompt('Edit message:',msg.text);
-  if(nv===null||nv.trim()===msg.text)return;
-  const clean=sanitize(nv.trim());if(!clean)return;
+async function editMsg(id){
+  if(msgMenuOpen){msgMenuOpen.remove();msgMenuOpen=null;}
+  const msg=(chats[cur?.id]||[]).find(m=>m.id===id);if(!msg||msg.from!=='me')return;
+  const newText=prompt('Edit message:',msg.text);
+  if(!newText||newText.trim()===msg.text)return;
+  const clean=sanitizeText(newText);
   msg.text=clean;msg.edited=true;
-  if(msg.db_id)sb.from('messages').update({text:clean,edited:true}).eq('id',msg.db_id);
+  if(msg.db_id){await sb.from('messages').update({text:clean,edited:true}).eq('id',msg.db_id);}
   renderMsgs();
 }
 
-async function delFor(id,scope){
-  if(msgMenuEl){msgMenuEl.remove();msgMenuEl=null;}
+async function delMsgFor(id,scope){
+  if(msgMenuOpen){msgMenuOpen.remove();msgMenuOpen=null;}
   if(!cur)return;
   const msg=(chats[cur.id]||[]).find(m=>m.id===id);if(!msg)return;
-  if(scope==='all'&&msg.db_id){await sb.from('messages').delete().eq('id',msg.db_id);}
+  if(scope==='everyone'&&msg.db_id){
+    await sb.from('messages').delete().eq('id',msg.db_id);
+  }
   chats[cur.id]=chats[cur.id].filter(m=>m.id!==id);
   renderMsgs();renderSB();
 }
 
 async function sendMsg(){
   const inp=document.getElementById('msg-inp');
-  const raw=inp?.value.trim();if(!raw||!cur)return;
-  const text=sanitize(raw);
+  const text=sanitizeText(inp?.value||'');
+  if(!text||!cur)return;
   inp.value='';toggleSend();
-  const time=tNow();const sentAt=Date.now();const tmp='tmp'+Date.now();
+  const time=tNow();const sentAt=Date.now();
+  const tmpId='tmp'+Date.now();
   if(!chats[cur.id])chats[cur.id]=[];
-  chats[cur.id].push({id:tmp,from:'me',text,time,sentAt,type:'text',edited:false});
+  chats[cur.id].push({id:tmpId,from:'me',text,time,sentAt,type:'text'});
   renderMsgs();renderSB();
   const {data,error}=await sb.from('messages').insert({sender_id:me.id,receiver_id:cur.id,text}).select().single();
-  if(!error&&data){const msg=chats[cur.id].find(m=>m.id===tmp);if(msg){msg.id='m'+data.id;msg.db_id=data.id;}}
+  if(!error&&data){const m=chats[cur.id].find(x=>x.id===tmpId);if(m){m.id='m'+data.id;m.db_id=data.id;}}
 }
 
 function toggleSend(){const inp=document.getElementById('msg-inp');const btn=document.getElementById('send-btn');if(inp&&btn)btn.disabled=!inp.value.trim();}
 
-// ══════════════════════════════════════════════
-// VOICE MESSAGES IN CHAT (stored in Supabase Storage)
-// ══════════════════════════════════════════════
-function toggleVM(){
-  const bar=document.getElementById('vm-bar');
+const vmStore={};
+function playVoiceMsg(msgId,btn){
+  const msg=(chats[cur?.id]||[]).find(m=>m.id===msgId);if(!msg||!msg.voiceData)return;
+  if(!vmStore[msgId])vmStore[msgId]=new Audio(msg.voiceData);
+  const audio=vmStore[msgId];
+  if(audio.paused){audio.currentTime=0;audio.play();btn.textContent='⏸';}
+  else{audio.pause();btn.textContent='▶';}
+  audio.onended=()=>{btn.textContent='▶';};
+}
+
+// ══════════════════════════════════════════════════════
+// VOICE MESSAGES IN CHAT
+// ══════════════════════════════════════════════════════
+function toggleVoiceMsg(){
+  const bar=document.getElementById('voice-msg-bar');
   const inp=document.getElementById('msg-inp');
-  const snd=document.getElementById('send-btn');
+  const sb2=document.getElementById('send-btn');
   if(!bar)return;
-  const open=bar.style.display==='flex';
-  if(open){bar.style.display='none';if(inp)inp.style.display='block';if(snd){snd.style.display='flex';snd.disabled=true;}vmReset();}
-  else{bar.style.display='flex';if(inp)inp.style.display='none';if(snd)snd.style.display='none';}
+  const showing=bar.style.display==='flex';
+  if(showing){bar.style.display='none';if(inp)inp.style.display='block';if(sb2)sb2.style.display='flex';vmReset();}
+  else{bar.style.display='flex';if(inp)inp.style.display='none';if(sb2)sb2.style.display='none';}
 }
 
 function vmReset(){
-  clearInterval(vmTmr);if(vmRec&&vmRec.state!=='inactive'){try{vmRec.stop();}catch(e){}}
+  clearInterval(vmTmr);
+  if(vmRec&&vmRec.state!=='inactive')vmRec.stop();
   vmChunks=[];vmBlob=null;vmSecs=0;
   const s=document.getElementById('vm-status');const t=document.getElementById('vm-timer');
-  const rb=document.getElementById('vm-rec');const sb2=document.getElementById('vm-stop');const sv=document.getElementById('vm-send');
-  if(s)s.textContent='Tap ⏺ to record (max 1 min)';
-  if(t){t.style.display='none';t.textContent='';}
-  if(rb)rb.style.display='inline-block';if(sb2)sb2.style.display='none';if(sv)sv.style.display='none';
+  const rb=document.getElementById('vm-rec-btn');const sb3=document.getElementById('vm-stop-btn');const send=document.getElementById('vm-send-btn');
+  if(s)s.textContent='Tap ⏺ to record';if(t){t.style.display='none';t.textContent='0s';}
+  if(rb)rb.style.display='inline-block';if(sb3)sb3.style.display='none';if(send)send.style.display='none';
 }
 
 function vmStart(){
   if(!navigator.mediaDevices){toast('Microphone not available');return;}
   navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
     vmChunks=[];vmBlob=null;vmSecs=0;
-    document.getElementById('vm-rec').style.display='none';
-    document.getElementById('vm-stop').style.display='inline-block';
-    const t=document.getElementById('vm-timer');if(t){t.style.display='inline';t.textContent='0s';}
-    document.getElementById('vm-status').textContent='Recording…';
+    const rb=document.getElementById('vm-rec-btn');const sb3=document.getElementById('vm-stop-btn');
+    const t=document.getElementById('vm-timer');const s=document.getElementById('vm-status');
+    if(rb)rb.style.display='none';if(sb3)sb3.style.display='inline-block';
+    if(t){t.style.display='inline';t.textContent='0s';}if(s)s.textContent='Recording…';
     vmRec=new MediaRecorder(stream);
-    vmRec.ondataavailable=e=>{if(e.data&&e.data.size>0)vmChunks.push(e.data);};
+    vmRec.ondataavailable=e=>{if(e.data.size>0)vmChunks.push(e.data);};
     vmRec.onstop=()=>{
       vmBlob=new Blob(vmChunks,{type:'audio/webm'});
-      document.getElementById('vm-send').style.display='inline-block';
-      document.getElementById('vm-stop').style.display='none';
-      document.getElementById('vm-rec').style.display='inline-block';
-      document.getElementById('vm-status').textContent=`${vmSecs}s — tap Send to share`;
+      const send=document.getElementById('vm-send-btn');const sb3=document.getElementById('vm-stop-btn');const s=document.getElementById('vm-status');
+      if(send)send.style.display='inline-block';if(sb3)sb3.style.display='none';if(s)s.textContent=vmSecs+'s — tap Send';
       stream.getTracks().forEach(t=>t.stop());
     };
-    vmRec.start(100);
-    vmTmr=setInterval(()=>{
-      vmSecs++;
-      const t=document.getElementById('vm-timer');if(t)t.textContent=vmSecs+'s';
-      if(vmSecs>=VM_MAX)vmStop();
-    },1000);
+    vmRec.start();
+    vmTmr=setInterval(()=>{vmSecs++;const t=document.getElementById('vm-timer');if(t)t.textContent=vmSecs+'s';if(vmSecs>=VM_MAX)vmStop();},1000);
   }).catch(()=>toast('Microphone access denied'));
 }
 
-function vmStop(){clearInterval(vmTmr);if(vmRec&&vmRec.state!=='inactive'){try{vmRec.stop();}catch(e){}}document.getElementById('vm-rec').style.display='inline-block';document.getElementById('vm-stop').style.display='none';}
+function vmStop(){clearInterval(vmTmr);if(vmRec&&vmRec.state!=='inactive')vmRec.stop();const rb=document.getElementById('vm-rec-btn');if(rb)rb.style.display='inline-block';}
 
 async function vmSend(){
-  if(!vmBlob||!cur){toast('Nothing to send');return;}
+  if(!vmBlob||!cur)return;
   const dur=vmSecs;
-  document.getElementById('vm-status').textContent='Uploading…';
-  try{
-    // Upload to Supabase Storage
-    const fileName=`${me.id}/${Date.now()}.webm`;
-    const {data:upData,error:upErr}=await sb.storage.from('voice-notes').upload(fileName,vmBlob,{contentType:'audio/webm',upsert:false});
-    if(upErr){throw upErr;}
-    // Get public URL (signed URL for private bucket)
-    const {data:urlData}=await sb.storage.from('voice-notes').createSignedUrl(fileName,60*60*24*7); // 7 days
-    const voiceUrl=urlData?.signedUrl;
-    if(!voiceUrl){throw new Error('Could not get voice URL');}
-    // Save message
-    const time=tNow();const sentAt=Date.now();const tmp='tmp'+Date.now();
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const b64=e.target.result;
+    const time=tNow();const tmpId='tmp'+Date.now();const sentAt=Date.now();
     if(!chats[cur.id])chats[cur.id]=[];
-    chats[cur.id].push({id:tmp,from:'me',type:'voice',voiceUrl,duration:dur,time,sentAt,edited:false});
+    chats[cur.id].push({id:tmpId,from:'me',type:'voice',voiceData:b64,duration:dur,time,sentAt});
     renderMsgs();renderSB();
-    const {data,error}=await sb.from('messages').insert({sender_id:me.id,receiver_id:cur.id,text:'🎤 Voice message',type:'voice',voice_url:voiceUrl,duration:dur}).select().single();
-    if(!error&&data){const msg=chats[cur.id].find(m=>m.id===tmp);if(msg){msg.id='m'+data.id;msg.db_id=data.id;}}
-    toggleVM();
-  }catch(err){
-    toast('Upload failed. Check your connection.');
-    document.getElementById('vm-status').textContent='Upload failed. Try again.';
-    console.error('Voice upload error:',err);
-  }
+    const {data}=await sb.from('messages').insert({sender_id:me.id,receiver_id:cur.id,text:'🎤 Voice message',type:'voice',voice_url:b64,duration:dur}).select().single();
+    if(data){const m=chats[cur.id].find(x=>x.id===tmpId);if(m){m.id='m'+data.id;m.db_id=data.id;}}
+    toggleVoiceMsg();
+  };
+  reader.readAsDataURL(vmBlob);
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // CALLS
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 const CC={received:'#2ECC78',dialed:'#2563EB',missed:'#E03E3E'};
 const CI={received:'📲 Received',dialed:'📤 Dialed',missed:'📵 Missed'};
 
@@ -1293,55 +1459,13 @@ function renderCalls(){
   const items=callFilter==='all'?callLog:callLog.filter(c=>c.type===callFilter);
   document.getElementById('calls-list').innerHTML=items.length?items.map(cl=>{
     const c=contacts.find(x=>x.id===cl.contactId)||{name:cl.number||'Unknown',photo:null};
-    return`<div class="call-row">${avH(c,42)}<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;color:${cl.type==='missed'?'var(--red)':'var(--dark)'};">${esc(c.name)}</div><div style="font-size:12px;color:${CC[cl.type]};margin-top:2px;">${CI[cl.type]} · ${cl.time}</div></div><div style="display:flex;gap:6px;"><button class="cact" onclick="startCallFor('${cl.contactId||''}')">📞</button><button class="cact" onclick="openChat('${cl.contactId||''}')">💬</button></div></div>`;
+    return `<div class="call-row">${avH(c,42)}<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;color:${cl.type==='missed'?'var(--red)':'var(--dark)'};">${esc(c.name)}</div><div style="font-size:12px;color:${CC[cl.type]};margin-top:2px;">${CI[cl.type]} · ${cl.time}</div></div><div style="display:flex;gap:6px;"><button class="cact" onclick="startCallFor('${cl.contactId||''}')">📞</button><button class="cact" onclick="openChat('${cl.contactId||''}')">💬</button></div></div>`;
   }).join(''):`<p style="text-align:center;color:var(--sub);padding:36px;">No ${callFilter==='all'?'':callFilter+' '}calls yet</p>`;
 }
 
-function doCall(){if(cur)startCallFor(cur.id);}
-function startCallFor(id){const c=contacts.find(x=>x.id===id);if(!c){toast('Contact not found');return;}cur=c;initiateCall(c);}
-
-async function initiateCall(c){
-  // Find this contact's Supabase user ID via their phone
-  const {data:targetProf}=await sb.from('profiles').select('id').eq('phone',c.phone).single();
-  if(!targetProf){toast(`${c.name} is not on Ipoki yet.`);return;}
-  const targetUserId=targetProf.id;
-  // Show overlay in ringing state
-  showCallOverlay(c);
-  // Start WebRTC as caller
-  const ok=await startWebRTCAsCallerTo(targetUserId);
-  if(!ok){endCall(false);return;}
-  // Log call
-  const {data:logData}=await sb.from('call_log').insert({caller_id:me.id,contact_id:c.id,number:c.phone,type:'dialed'}).select().single();
-  if(logData){callLog.unshift({id:'cl'+logData.id,db_id:logData.id,contactId:c.id,number:c.phone,type:'dialed',time:tNow()});renderSB();}
-  // Auto-timeout 30s if no answer
-  ringTmr=setTimeout(async()=>{
-    if(!callConnected){
-      await endCall(true);
-      toast('No answer');
-      // Mark as missed for the receiver side
-      await sb.from('call_log').insert({caller_id:targetUserId,contact_id:me.id,number:me.phone||'',type:'missed'}).catch(()=>{});
-    }
-  },30000);
-}
-
-function tMute(){muted=!muted;const b=document.getElementById('c-mute');b.textContent=muted?'🔇':'🎙️';b.className='ctrl-c '+(muted?'on':'dim');if(localStream)localStream.getAudioTracks().forEach(t=>t.enabled=!muted);}
-function tSpk(){speaker=!speaker;const b=document.getElementById('c-spk');b.textContent=speaker?'🔊':'🔈';b.className='ctrl-c '+(speaker?'on':'dim');}
-function tRec(){recording=!recording;document.getElementById('c-rec').className='ctrl-c '+(recording?'rec-on':'dim');document.getElementById('rec-badge').style.display=recording?'block':'none';}
-function tCht(){chatOpen=!chatOpen;document.getElementById('c-cht').className='ctrl-c '+(chatOpen?'on':'dim');document.getElementById('ic-box').style.display=chatOpen?'block':'none';if(chatOpen)renderICM();}
-function renderICM(){const msgs=(chats[cur?.id]||[]).filter(m=>m.type!=='voice').slice(-5);document.getElementById('ic-msgs').innerHTML=msgs.map(m=>`<div class="icmsg ${m.from}">${m.from==='me'?'You':esc(cur?.name||'')}: ${esc(m.text)}</div>`).join('');}
-async function sendIC(){
-  const inp=document.getElementById('ic-inp');const text=sanitize(inp?.value.trim()||'');if(!text||!cur)return;inp.value='';
-  const time=tNow();const sentAt=Date.now();const tmp='tmp'+Date.now();
-  if(!chats[cur.id])chats[cur.id]=[];
-  chats[cur.id].push({id:tmp,from:'me',text,time,sentAt,type:'text',edited:false});
-  renderSB();renderICM();
-  const {data}=await sb.from('messages').insert({sender_id:me.id,receiver_id:cur.id,text}).select().single();
-  if(data){const m=chats[cur.id].find(x=>x.id===tmp);if(m){m.id='m'+data.id;m.db_id=data.id;}}
-}
-
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // CONTACTS
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function renderContacts(){
   const q=(document.getElementById('c-search')?.value||'').toLowerCase();
   const items=contacts.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q));
@@ -1354,61 +1478,93 @@ function renderContacts(){
     </div>`).join(''):`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--sub);"><div style="font-size:40px;margin-bottom:10px;">👥</div><div style="font-size:14px;margin-bottom:14px;">${q?'No contacts match.':'No contacts yet.'}</div>${!q?`<button class="bp" style="width:auto;padding:10px 20px;" onclick="openAddC()">＋ Add Contact</button>`:''}</div>`;
 }
 
-async function scanContacts(){
-  if(!('contacts' in navigator&&'ContactsManager' in window)){toast('Contact scan needs Android Chrome over HTTPS');return;}
+async function scanPhoneContacts(){
+  if(!('contacts' in navigator&&'ContactsManager' in window)){toast('Contact scan requires Chrome on Android.');return;}
   try{
     const results=await navigator.contacts.select(['name','tel'],{multiple:true});
     if(!results||!results.length){toast('No contacts selected.');return;}
     let added=0;
     for(const r of results){
-      const name=sanitize((r.name&&r.name[0])||'Unknown');
-      const phone=sanitize((r.tel&&r.tel[0])||'');
+      const name=sanitizeText(r.name?.[0]||'Unknown');
+      const phone=sanitizeText(r.tel?.[0]||'');
       if(!phone)continue;
       if(contacts.find(c=>c.phone.replace(/\D/g,'')===phone.replace(/\D/g,'')))continue;
-      const {data,error}=await sb.from('contacts').insert({owner_id:me.id,name,phone,photo:null,blocked:false}).select().single();
+      const{data,error}=await sb.from('contacts').insert({owner_id:me.id,name,phone,blocked:false}).select().single();
       if(!error&&data){contacts.push(data);added++;}
     }
     renderContacts();renderSB();
-    toast(added>0?`${added} contact${added>1?'s':''} imported ✓`:'No new contacts.');
-  }catch(e){toast('Contact scan cancelled or denied.');}
+    toast(added>0?`${added} contact${added>1?'s':''} imported ✓`:'No new contacts to import.');
+  }catch(e){toast('Contact scan cancelled.');}
 }
 
-function openAddC(){editCId=null;cPhotoData=null;document.getElementById('c-modal-title').textContent='Add Contact';document.getElementById('c-name').value='';document.getElementById('c-phone').value='';document.getElementById('c-pprev').style.display='none';document.getElementById('c-pph').style.display='flex';document.getElementById('c-err').classList.remove('show');document.getElementById('c-pi').value='';document.getElementById('c-modal').classList.remove('gone');}
-function openEditC(id){editCId=id;const c=contacts.find(x=>x.id===id);if(!c)return;cPhotoData=c.photo||null;document.getElementById('c-modal-title').textContent='Edit Contact';document.getElementById('c-name').value=c.name;document.getElementById('c-phone').value=c.phone;if(c.photo){document.getElementById('c-pprev').src=c.photo;document.getElementById('c-pprev').style.display='block';document.getElementById('c-pph').style.display='none';}else{document.getElementById('c-pprev').style.display='none';document.getElementById('c-pph').style.display='flex';}document.getElementById('c-err').classList.remove('show');document.getElementById('c-modal').classList.remove('gone');}
+function openAddC(){
+  editCId=null;cPhotoData=null;
+  document.getElementById('c-modal-title').textContent='Add Contact';
+  document.getElementById('c-name').value='';document.getElementById('c-phone').value='';
+  document.getElementById('c-pprev').style.display='none';document.getElementById('c-pph').style.display='flex';
+  document.getElementById('c-err').classList.remove('show');document.getElementById('c-pi').value='';
+  document.getElementById('c-modal').classList.remove('gone');
+}
+
+function openEditC(id){
+  editCId=id;const c=contacts.find(x=>x.id===id);if(!c)return;
+  cPhotoData=c.photo||null;
+  document.getElementById('c-modal-title').textContent='Edit Contact';
+  document.getElementById('c-name').value=c.name;document.getElementById('c-phone').value=c.phone;
+  if(c.photo){document.getElementById('c-pprev').src=c.photo;document.getElementById('c-pprev').style.display='block';document.getElementById('c-pph').style.display='none';}
+  else{document.getElementById('c-pprev').style.display='none';document.getElementById('c-pph').style.display='flex';}
+  document.getElementById('c-err').classList.remove('show');
+  document.getElementById('c-modal').classList.remove('gone');
+}
+
 function closeCM(){document.getElementById('c-modal').classList.add('gone');editCId=null;cPhotoData=null;}
-function prevCP(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{cPhotoData=e.target.result;document.getElementById('c-pprev').src=e.target.result;document.getElementById('c-pprev').style.display='block';document.getElementById('c-pph').style.display='none';};r.readAsDataURL(f);}
+
+function prevCP(inp){
+  const f=inp.files[0];if(!f)return;
+  if(f.size>2*1024*1024){toast('Photo must be under 2MB');return;}
+  const r=new FileReader();r.onload=e=>{cPhotoData=e.target.result;document.getElementById('c-pprev').src=e.target.result;document.getElementById('c-pprev').style.display='block';document.getElementById('c-pph').style.display='none';};r.readAsDataURL(f);
+}
 
 async function saveC(){
-  const name=sanitize(document.getElementById('c-name').value.trim());
-  const phone=sanitize(document.getElementById('c-phone').value.trim());
+  const name=sanitizeText(document.getElementById('c-name').value);
+  const phone=sanitizeText(document.getElementById('c-phone').value);
   if(!name||!phone){showErr('c-err','Name and phone are required.');return;}
+  if(!isValidPhone(phone)){showErr('c-err','Please enter a valid phone number.');return;}
   if(editCId){
-    const {error}=await sb.from('contacts').update({name,phone,photo:cPhotoData||undefined}).eq('id',editCId).eq('owner_id',me.id);
-    if(error){showErr('c-err',error.message);return;}
-    const c=contacts.find(x=>x.id===editCId);if(c){c.name=name;c.phone=phone;if(cPhotoData)c.photo=cPhotoData;}
-    toast('Contact updated ✓');
+    const{error}=await sb.from('contacts').update({name,phone,photo:cPhotoData||null}).eq('id',editCId).eq('owner_id',me.id);
+    if(!error){const c=contacts.find(x=>x.id===editCId);if(c){c.name=name;c.phone=phone;if(cPhotoData)c.photo=cPhotoData;}}
   }else{
-    const {data,error}=await sb.from('contacts').insert({owner_id:me.id,name,phone,photo:cPhotoData||null,blocked:false}).select().single();
-    if(error){showErr('c-err',error.message);return;}
-    contacts.push(data);toast('Contact added ✓');
+    const{data,error}=await sb.from('contacts').insert({owner_id:me.id,name,phone,photo:cPhotoData||null,blocked:false}).select().single();
+    if(!error&&data)contacts.push(data);
   }
-  renderContacts();renderSB();closeCM();
+  renderContacts();renderSB();closeCM();toast(editCId?'Contact updated ✓':'Contact added ✓');
 }
 
-async function tBlock(id){const c=contacts.find(x=>x.id===id);if(!c)return;c.blocked=!c.blocked;await sb.from('contacts').update({blocked:c.blocked}).eq('id',id).eq('owner_id',me.id);renderContacts();renderSB();toast(c.blocked?'Contact blocked':'Contact unblocked');}
-async function delC(id){if(!confirm('Delete this contact?'))return;await sb.from('contacts').delete().eq('id',id).eq('owner_id',me.id);contacts=contacts.filter(x=>x.id!==id);renderContacts();renderSB();}
+async function tBlock(id){
+  const c=contacts.find(x=>x.id===id);if(!c)return;
+  c.blocked=!c.blocked;
+  await sb.from('contacts').update({blocked:c.blocked}).eq('id',id).eq('owner_id',me.id);
+  renderContacts();renderSB();toast(c.blocked?'Contact blocked':'Contact unblocked');
+}
 
-// ══════════════════════════════════════════════
+async function delC(id){
+  if(!confirm('Delete this contact?'))return;
+  await sb.from('contacts').delete().eq('id',id).eq('owner_id',me.id);
+  contacts=contacts.filter(x=>x.id!==id);
+  renderContacts();renderSB();
+}
+
+// ══════════════════════════════════════════════════════
 // BLOCKED
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function renderBlocked(){
   const items=contacts.filter(c=>c.blocked);
   document.getElementById('blocked-list').innerHTML=items.length?items.map(c=>`<div class="c-card blocked" style="flex-direction:row;align-items:center;gap:10px;padding:12px 14px;">${avH(c,40)}<div style="flex:1;"><div class="c-name">${esc(c.name)}</div><div class="c-phone">${esc(c.phone)}</div></div><button class="c-btn" onclick="tBlock('${c.id}');renderBlocked()">🟢 Unblock</button></div>`).join(''):`<p style="text-align:center;color:var(--sub);padding:36px;">No blocked contacts</p>`;
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // PROFILE
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function renderProfile(){
   if(!me)return;
   document.getElementById('profile-box').innerHTML=`
@@ -1419,28 +1575,98 @@ function renderProfile(){
       <input type="file" id="prof-pi" accept="image/*" style="display:none;" onchange="updProfPhoto(this)"/>
     </div>
     <div class="field">
-      <div class="irow"><span class="iico">👤</span><input type="text" id="pn" value="${esc(me.name)}" placeholder="Full Name"/></div>
+      <div class="irow"><span class="iico">👤</span><input type="text" id="pn" value="${esc(me.name)}" placeholder="Full Name" maxlength="60"/></div>
       <div class="irow"><span class="iico">📧</span><input type="text" value="${esc(me.email)}" readonly style="opacity:.6;"/></div>
-      <div class="irow"><span class="iico">📞</span><input type="tel" id="pp-ph" value="${esc(me.phone||'')}" placeholder="Phone"/></div>
+      <div class="irow"><span class="iico">📞</span><input type="tel" id="pp-ph" value="${esc(me.phone||'')}" placeholder="Phone" maxlength="20"/></div>
     </div>
     <button class="bp" onclick="saveProfile()">Save Changes</button>
     <div id="prof-ok" style="text-align:center;font-size:13px;color:var(--green);margin-top:8px;display:none;">✓ Saved</div>`;
 }
-function updProfPhoto(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{me.photo=e.target.result;const p=document.getElementById('prof-pp');if(p)p.innerHTML=`<img src="${e.target.result}"/>`;};r.readAsDataURL(f);}
+
+function updProfPhoto(inp){
+  const f=inp.files[0];if(!f)return;
+  if(f.size>2*1024*1024){toast('Photo must be under 2MB');return;}
+  const r=new FileReader();r.onload=e=>{me.photo=e.target.result;const p=document.getElementById('prof-pp');if(p)p.innerHTML=`<img src="${e.target.result}"/>`;};r.readAsDataURL(f);
+}
+
 async function saveProfile(){
-  const name=sanitize(document.getElementById('pn')?.value.trim()||'');
-  const phone=sanitize(document.getElementById('pp-ph')?.value.trim()||'');
+  const name=sanitizeText(document.getElementById('pn')?.value||'');
+  const phone=sanitizeText(document.getElementById('pp-ph')?.value||'');
   if(!name)return;
   me.name=name;if(phone)me.phone=phone;
   await sb.from('profiles').update({name,phone:phone||me.phone,photo:me.photo||null}).eq('id',me.id);
   updateSBMe();
-  const ok=document.getElementById('prof-ok');if(ok){ok.style.display='block';setTimeout(()=>ok.style.display='none',2000);}
+  const ok=document.getElementById('prof-ok');
+  if(ok){ok.style.display='block';setTimeout(()=>ok.style.display='none',2000);}
   toast('Profile saved ✓');
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// CALL UI
+// ══════════════════════════════════════════════════════
+function doCall(){if(cur)startCallFor(cur.id);}
+function startCallFor(id){const c=contacts.find(x=>x.id===id);if(!c)return;cur=c;initiateCall(c);}
+
+async function initiateCall(c){
+  // Log call
+  const{data}=await sb.from('call_log').insert({caller_id:me.id,contact_id:c.id||null,number:c.phone,type:'dialed'}).select().single();
+  callLog.unshift({id:'cl'+(data?.id||Date.now()),db_id:data?.id,contactId:c.id,number:c.phone,type:'dialed',time:tNow()});
+  renderSB();
+  showCallUI(c);
+  // Start real WebRTC call
+  await startWebRTCCall(c.id);
+}
+
+function showCallUI(c){
+  setAv(document.getElementById('call-av'),c,78);
+  document.getElementById('call-cname').textContent=c.name;
+  callSecs=0;muted=false;speaker=false;recording=false;chatOpen=false;
+  ['c-mute','c-spk','c-rec','c-cht'].forEach(id=>{const b=document.getElementById(id);if(b)b.className='ctrl-c dim';});
+  document.getElementById('c-mute').textContent='🎙️';
+  document.getElementById('c-spk').textContent='🔈';
+  document.getElementById('rec-badge').style.display='none';
+  document.getElementById('ic-box').style.display='none';
+  const timerEl=document.getElementById('call-timer');
+  const stateEl=document.getElementById('call-state-label');
+  const ctrlEl=document.getElementById('call-controls');
+  if(timerEl){timerEl.style.display='none';timerEl.textContent='00:00';}
+  if(stateEl){stateEl.style.display='block';stateEl.textContent='Ringing…';stateEl.style.color='var(--sub)';}
+  if(ctrlEl){ctrlEl.style.opacity='.4';ctrlEl.style.pointerEvents='none';}
+  document.getElementById('call-overlay').classList.remove('gone');
+}
+
+function callAnswered(){
+  clearInterval(callTmr);callSecs=0;
+  const timerEl=document.getElementById('call-timer');
+  const stateEl=document.getElementById('call-state-label');
+  const ctrlEl=document.getElementById('call-controls');
+  if(stateEl){stateEl.textContent='Connected';stateEl.style.color='var(--green)';}
+  if(timerEl)timerEl.style.display='block';
+  if(ctrlEl){ctrlEl.style.opacity='1';ctrlEl.style.pointerEvents='auto';}
+  callTmr=setInterval(()=>{callSecs++;const t=document.getElementById('call-timer');if(t)t.textContent=String(Math.floor(callSecs/60)).padStart(2,'0')+':'+String(callSecs%60).padStart(2,'0');},1000);
+}
+
+function endCall(){
+  clearInterval(callTmr);
+  // Send hangup signal to other party
+  if(cur&&pc)sendSignal('hangup',cur.id,{});
+  closeWebRTC();
+  document.getElementById('call-overlay').classList.add('gone');
+  document.getElementById('incoming-overlay').classList.add('gone');
+  const stateEl=document.getElementById('call-state-label');
+  if(stateEl){stateEl.textContent='Ringing…';stateEl.style.color='var(--sub)';}
+}
+
+function tMute(){muted=!muted;const b=document.getElementById('c-mute');b.textContent=muted?'🔇':'🎙️';b.className='ctrl-c '+(muted?'on':'dim');if(localStream)localStream.getAudioTracks().forEach(t=>t.enabled=!muted);}
+function tSpk(){speaker=!speaker;const b=document.getElementById('c-spk');b.textContent=speaker?'🔊':'🔈';b.className='ctrl-c '+(speaker?'on':'dim');}
+function tRec(){recording=!recording;document.getElementById('c-rec').className='ctrl-c '+(recording?'rec-on':'dim');document.getElementById('rec-badge').style.display=recording?'block':'none';}
+function tCht(){chatOpen=!chatOpen;document.getElementById('c-cht').className='ctrl-c '+(chatOpen?'on':'dim');document.getElementById('ic-box').style.display=chatOpen?'block':'none';if(chatOpen)renderICM();}
+function renderICM(){const msgs=(chats[cur?.id]||[]).slice(-5);document.getElementById('ic-msgs').innerHTML=msgs.map(m=>`<div class="icmsg ${m.from}">${m.from==='me'?'You':esc(cur?.name||'')}: ${esc(m.text||'')}</div>`).join('');}
+async function sendIC(){const inp=document.getElementById('ic-inp');const text=sanitizeText(inp?.value||'');if(!text||!cur)return;inp.value='';if(!chats[cur.id])chats[cur.id]=[];const tmp='tmp'+Date.now();chats[cur.id].push({id:tmp,from:'me',text,time:tNow(),sentAt:Date.now(),type:'text'});renderICM();const{data}=await sb.from('messages').insert({sender_id:me.id,receiver_id:cur.id,text}).select().single();if(data){const m=chats[cur.id].find(x=>x.id===tmp);if(m){m.id='m'+data.id;m.db_id=data.id;}}renderSB();}
+
+// ══════════════════════════════════════════════════════
 // DIALER
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function buildDialer(){
   const grid=document.getElementById('dial-grid');if(!grid||grid.childElementCount>0)return;
   [['1',''],['2','ABC'],['3','DEF'],['4','GHI'],['5','JKL'],['6','MNO'],['7','PQRS'],['8','TUV'],['9','WXYZ'],['*',''],['0','+'],['#','']].forEach(([d,sub])=>{
@@ -1451,31 +1677,17 @@ function buildDialer(){
 }
 function updDial(){const el=document.getElementById('dial-num');if(!el)return;el.textContent=dialNum||'Enter number';el.style.color=dialNum?'var(--dark)':'var(--gold-border)';}
 function dialDel(){dialNum=dialNum.slice(0,-1);updDial();}
-function findByNum(){return contacts.find(c=>c.phone.replace(/\D/g,'').includes(dialNum.replace(/\D/g,'')))||null;}
-function dialCall(){if(!dialNum)return;const c=findByNum();if(!c){toast('Contact not found. Add them first.');return;}startCallFor(c.id);}
+function findByNum(){return contacts.find(c=>c.phone.replace(/\D/g,'').includes(dialNum.replace(/\D/g,'')))||{id:'',name:dialNum,phone:dialNum,photo:null,blocked:false};}
+function dialCall(){if(!dialNum)return;const c=findByNum();if(c.id){cur=contacts.find(x=>x.id===c.id)||c;startCallFor(c.id);}else{initiateCall(c);}}
 function dialMsg(){
-  if(!dialNum)return;
-  const c=findByNum();
-  if(!c){
-    if(confirm('Save '+dialNum+' as a contact to message?')){
-      document.getElementById('c-phone').value=dialNum;
-      document.getElementById('c-name').value='';
-      editCId=null;cPhotoData=null;
-      document.getElementById('c-modal-title').textContent='Save Contact';
-      document.getElementById('c-pprev').style.display='none';
-      document.getElementById('c-pph').style.display='flex';
-      document.getElementById('c-err').classList.remove('show');
-      document.getElementById('c-modal').classList.remove('gone');
-      document.getElementById('c-name').focus();
-    }
-    return;
-  }
-  openChat(c.id);
+  if(!dialNum)return;let c=findByNum();
+  if(!c.id){if(!confirm('Save '+esc(dialNum)+' as contact?'))return;openAddC();document.getElementById('c-phone').value=dialNum;return;}
+  cur=contacts.find(x=>x.id===c.id)||c;openChat(cur.id);
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // NOTES
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function renderNoteList(){
   const q=(document.getElementById('note-q')?.value||'').toLowerCase();
   const items=notes.filter(n=>(n.title+n.body).toLowerCase().includes(q));
@@ -1483,18 +1695,18 @@ function renderNoteList(){
 }
 function loadNote(id){const n=notes.find(x=>x.id===id);if(!n)return;curNoteId=id;const body=document.getElementById('note-body');if(body)body.value=n.body;renderNoteList();}
 async function newNote(){
-  const {data,error}=await sb.from('notes').insert({owner_id:me.id,title:'New note',body:'',updated_at:new Date().toISOString()}).select().single();
+  const{data,error}=await sb.from('notes').insert({owner_id:me.id,title:'New note',body:'',updated_at:new Date().toISOString()}).select().single();
   if(error){toast('Error creating note');return;}
-  const n={id:data.id,title:'New note',body:'',time:new Date().toLocaleString()};
-  notes.unshift(n);curNoteId=n.id;renderNoteList();loadNote(n.id);document.getElementById('note-body')?.focus();
+  notes.unshift({id:data.id,title:'New note',body:'',time:new Date().toLocaleString()});
+  curNoteId=data.id;renderNoteList();loadNote(data.id);document.getElementById('note-body')?.focus();
 }
 function autoSave(){
   clearTimeout(noteTmr);
   noteTmr=setTimeout(async()=>{
     const n=notes.find(x=>x.id===curNoteId);if(!n)return;
-    const body=document.getElementById('note-body')?.value||'';
+    const body=sanitizeText(document.getElementById('note-body')?.value||'');
     n.body=body;n.title=body.split('\n')[0].slice(0,40)||'Untitled';n.time=new Date().toLocaleString();
-    await sb.from('notes').update({body,title:n.title,updated_at:new Date().toISOString()}).eq('id',curNoteId).eq('owner_id',me.id);
+    await sb.from('notes').update({body,title:n.title,updated_at:new Date().toISOString()}).eq('id',n.id).eq('owner_id',me.id);
     renderNoteList();
     const st=document.getElementById('note-status');if(st){st.textContent='Saved ✓';setTimeout(()=>st.textContent='Auto-saved',1800);}
   },800);
@@ -1505,90 +1717,125 @@ async function delNote(){
   notes=notes.filter(x=>x.id!==curNoteId);
   curNoteId=notes[0]?.id||null;
   const body=document.getElementById('note-body');if(body)body.value='';
-  renderNoteList();if(curNoteId)loadNote(curNoteId);toast('Note deleted');
+  renderNoteList();if(curNoteId)loadNote(curNoteId);
+  toast('Note deleted');
 }
 
-// ══════════════════════════════════════════════
-// VOICE RECORDER (notes - saves to phone)
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// VOICE MEMO (notes)
+// ══════════════════════════════════════════════════════
 function updRecTimer(){document.getElementById('rec-timer').textContent=`${recSecs}s / ${REC_MAX}s`;if(recSecs>=REC_MAX)stopRec();}
 function startRec(){
   if(!navigator.mediaDevices){toast('Microphone not supported');return;}
   navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-    recChunks=[];recBlob=null;recAudio=null;recSecs=0;
+    recChunks=[];recBlob=null;recSecs=0;
     document.getElementById('rec-status').textContent='Recording…';
     document.getElementById('rec-start-btn').style.display='none';
     document.getElementById('rec-stop-btn').style.display='inline-block';
     document.getElementById('rec-play-btn').style.display='none';
     document.getElementById('rec-save-btn').style.display='none';
-    document.getElementById('rec-timer').textContent='0s / 60s';
     mediaRec=new MediaRecorder(stream);
-    mediaRec.ondataavailable=e=>{if(e.data&&e.data.size>0)recChunks.push(e.data);};
+    mediaRec.ondataavailable=e=>{if(e.data.size>0)recChunks.push(e.data);};
     mediaRec.onstop=()=>{
       recBlob=new Blob(recChunks,{type:'audio/webm'});
       recAudio=new Audio(URL.createObjectURL(recBlob));
       document.getElementById('rec-play-btn').style.display='inline-block';
       document.getElementById('rec-save-btn').style.display='inline-block';
-      document.getElementById('rec-status').textContent='Done. Play or save to phone.';
+      document.getElementById('rec-status').textContent='Ready. Play or save.';
       stream.getTracks().forEach(t=>t.stop());
     };
-    mediaRec.start(100);
+    mediaRec.start();
     recTmr=setInterval(()=>{recSecs++;updRecTimer();},1000);
   }).catch(()=>toast('Microphone access denied'));
 }
-function stopRec(){clearInterval(recTmr);if(mediaRec&&mediaRec.state!=='inactive'){try{mediaRec.stop();}catch(e){}}document.getElementById('rec-stop-btn').style.display='none';document.getElementById('rec-start-btn').style.display='inline-block';}
-function playRec(){if(!recAudio)return;recAudio.currentTime=0;recAudio.play();document.getElementById('rec-status').textContent='Playing…';recAudio.onended=()=>document.getElementById('rec-status').textContent='Playback done.';}
-function saveRec(){if(!recBlob)return;const url=URL.createObjectURL(recBlob);const a=document.createElement('a');a.href=url;a.download='ipoki-memo-'+Date.now()+'.webm';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('Recording saved to your device 💾');}
+function stopRec(){clearInterval(recTmr);if(mediaRec&&mediaRec.state!=='inactive')mediaRec.stop();document.getElementById('rec-stop-btn').style.display='none';document.getElementById('rec-start-btn').style.display='inline-block';}
+function playRec(){if(!recAudio)return;recAudio.currentTime=0;recAudio.play();document.getElementById('rec-status').textContent='Playing…';recAudio.onended=()=>document.getElementById('rec-status').textContent='Done.';}
+function saveRec(){if(!recBlob)return;const url=URL.createObjectURL(recBlob);const a=document.createElement('a');a.href=url;a.download='ipoki-memo-'+Date.now()+'.webm';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('Saved to your device 💾');}
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // CALCULATOR
-// ══════════════════════════════════════════════
-function buildCalc(){const grid=document.getElementById('calc-grid');if(!grid||grid.childElementCount>0)return;[['C','fn'],['±','fn'],['%','fn'],['÷','op'],['7','num'],['8','num'],['9','num'],['×','op'],['4','num'],['5','num'],['6','num'],['−','op'],['1','num'],['2','num'],['3','num'],['+','op'],['0','num zero'],['·','num'],['=','eq']].forEach(([k,cls])=>{const btn=document.createElement('button');btn.className='ckey '+cls;btn.textContent=k;btn.onclick=()=>calcKey(k);grid.appendChild(btn);});}
-function calcKey(k){const st=calc;if(k==='C'){st.d='0';st.p=null;st.op=null;st.r=false;st.e='';}else if(k==='±'){st.d=String(-parseFloat(st.d)||0);}else if(k==='%'){st.d=String(parseFloat(st.d)/100);}else if(['÷','×','−','+'].includes(k)){st.p=parseFloat(st.d);st.op=k;st.r=true;st.e=st.d+' '+k;}else if(k==='='){if(st.p!==null&&st.op){const c2=parseFloat(st.d);let res;if(st.op==='÷')res=c2!==0?st.p/c2:'Error';else if(st.op==='×')res=st.p*c2;else if(st.op==='−')res=st.p-c2;else res=st.p+c2;st.e=st.e+' '+c2+' =';st.d=String(res);st.p=null;st.op=null;st.r=true;}}else if(k==='·'){if(st.r){st.d='0.';st.r=false;}else if(!st.d.includes('.'))st.d+='.';}else{if(st.d==='0'||st.r){st.d=k;st.r=false;}else st.d+=k;}const ne=document.getElementById('calc-num');const ee=document.getElementById('calc-expr');if(ne){ne.textContent=st.d;ne.style.fontSize=st.d.length>9?'26px':'44px';}if(ee)ee.textContent=st.e;}
+// ══════════════════════════════════════════════════════
+function buildCalc(){
+  const grid=document.getElementById('calc-grid');if(!grid||grid.childElementCount>0)return;
+  [['C','fn'],['±','fn'],['%','fn'],['÷','op'],['7','num'],['8','num'],['9','num'],['×','op'],['4','num'],['5','num'],['6','num'],['−','op'],['1','num'],['2','num'],['3','num'],['+','op'],['0','num zero'],['·','num'],['=','eq']].forEach(([k,cls])=>{
+    const btn=document.createElement('button');btn.className='ckey '+cls;btn.textContent=k;btn.onclick=()=>calcKey(k);grid.appendChild(btn);
+  });
+}
+function calcKey(k){
+  const st=calc;
+  if(k==='C'){st.d='0';st.p=null;st.op=null;st.r=false;st.e='';}
+  else if(k==='±'){st.d=String(-parseFloat(st.d)||0);}
+  else if(k==='%'){st.d=String(parseFloat(st.d)/100);}
+  else if(['÷','×','−','+'].includes(k)){st.p=parseFloat(st.d);st.op=k;st.r=true;st.e=st.d+' '+k;}
+  else if(k==='='){if(st.p!==null&&st.op){const c2=parseFloat(st.d);let res;if(st.op==='÷')res=c2!==0?st.p/c2:'Error';else if(st.op==='×')res=st.p*c2;else if(st.op==='−')res=st.p-c2;else res=st.p+c2;st.e=st.e+' '+c2+' =';st.d=String(res);st.p=null;st.op=null;st.r=true;}}
+  else if(k==='·'){if(st.r){st.d='0.';st.r=false;}else if(!st.d.includes('.'))st.d+='.';}
+  else{if(st.d==='0'||st.r){st.d=k;st.r=false;}else st.d+=k;}
+  const ne=document.getElementById('calc-num');const ee=document.getElementById('calc-expr');
+  if(ne){ne.textContent=st.d;ne.style.fontSize=st.d.length>9?'26px':'44px';}
+  if(ee)ee.textContent=st.e;
+}
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // TONES
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function openTonesModal(){document.getElementById('tones-modal').classList.remove('gone');}
 function closeTonesModal(){document.getElementById('tones-modal').classList.add('gone');}
-function setTone(type,inp){const f=inp.files[0];if(!f)return;const key={call:'pk_ct_name',msg:'pk_mt_name',notif:'pk_nt_name'}[type];const lblId={call:'call-tone-name',msg:'msg-tone-name',notif:'notif-tone-name'}[type];LS.s(key,f.name);document.getElementById(lblId).textContent=f.name;toast('Tone set: '+f.name);}
+function setTone(type,inp){
+  const f=inp.files[0];if(!f)return;
+  const k={call:'pk_ct',msg:'pk_mt',notif:'pk_nt'}[type];
+  const lbl={call:'call-tone-name',msg:'msg-tone-name',notif:'notif-tone-name'}[type];
+  LS.s(k,f.name);document.getElementById(lbl).textContent=f.name;
+  toast('Tone set: '+f.name);
+}
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 // ADMIN
-// ══════════════════════════════════════════════
-async function renderAdmin(){
-  if(!isAdmin())return;
-  const [ur,mr,nr]=await Promise.all([
+// ══════════════════════════════════════════════════════
+async function openAdmin(){
+  if(!isAdmin()){go('more');return;}
+  const[uRes,mRes,nRes]=await Promise.all([
     sb.from('profiles').select('id,name,phone,is_online,created_at',{count:'exact'}),
     sb.from('messages').select('id',{count:'exact'}),
     sb.from('notes').select('id',{count:'exact'}),
   ]);
-  document.getElementById('adm-u').textContent=ur.count||0;
-  document.getElementById('adm-m').textContent=mr.count||0;
-  document.getElementById('adm-n').textContent=nr.count||0;
-  document.getElementById('adm-list').innerHTML=(ur.data||[]).map(u=>`
+  const u=document.getElementById('adm-users');const m=document.getElementById('adm-msgs');const n=document.getElementById('adm-notes');
+  if(u)u.textContent=uRes.count||0;if(m)m.textContent=mRes.count||0;if(n)n.textContent=nRes.count||0;
+  const users=uRes.data||[];
+  const ul=document.getElementById('adm-user-list');
+  if(ul)ul.innerHTML=users.map(u=>`
     <div style="background:#fff;border-radius:12px;padding:12px 14px;border:1.5px solid var(--border);display:flex;align-items:center;gap:10px;">
-      <div class="av" style="width:36px;height:36px;font-size:14px;">${esc(u.name?.charAt(0)||'?')}</div>
       <div style="flex:1;"><div style="font-weight:700;font-size:13px;">${esc(u.name)}</div><div style="font-size:11px;color:var(--sub);">${esc(u.phone||'—')} · Joined ${new Date(u.created_at).toLocaleDateString()}</div></div>
       <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${u.is_online?'#e8fdf0':'#f5f5f5'};color:${u.is_online?'var(--green)':'var(--sub)'};">${u.is_online?'Online':'Offline'}</span>
     </div>`).join('');
 }
 
-// ══════════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════════
-(async()=>{
-  showLoading();
-  const {data:{session}}=await sb.auth.getSession();
-  if(session?.user){await loadAndInit(session.user);}
-  else{showAuth('splash');}
-  sb.auth.onAuthStateChange(async(event,session)=>{
-    if(event==='SIGNED_IN'&&session?.user&&!me){await loadAndInit(session.user);}
-    else if(event==='SIGNED_OUT'){me=null;showAuth('splash');}
-    else if(event==='PASSWORD_RECOVERY'){showAuth('forgot');}
-  });
-})();
+// ══════════════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════════════
+function tNow(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function save(){} // Data is saved directly to Supabase now, this is a no-op kept for compatibility
 
+// ══════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════
+(async()=>{
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(session?.user){
+      await loadAndInit(session.user);
+    }else{
+      hideLoading();showAuth('splash');
+    }
+    sb.auth.onAuthStateChange(async(event,session)=>{
+      if(event==='SIGNED_IN'&&session?.user&&!me){await loadAndInit(session.user);}
+      if(event==='SIGNED_OUT'){me=null;showAuth('splash');}
+      if(event==='PASSWORD_RECOVERY'){showAuth('forgot');}
+    });
+  }catch(e){
+    console.error('Boot error:',e);
+    hideLoading();showAuth('splash');
+  }
+})();
 </script>
 </body>
 </html>
