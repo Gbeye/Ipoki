@@ -720,7 +720,13 @@ const REC_MAX=60;
 let msgMenuOpen=null;
 // WebRTC state
 let pc=null,localStream=null,callChannel=null,incomingCallerId=null;
-const RTC_CONFIG={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+const RTC_CONFIG={iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
+]};
 
 // ══════════════════════════════════════════════════════
 // TOAST
@@ -1433,18 +1439,27 @@ function vmStop(){clearInterval(vmTmr);if(vmRec&&vmRec.state!=='inactive')vmRec.
 async function vmSend(){
   if(!vmBlob||!cur)return;
   const dur=vmSecs;
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    const b64=e.target.result;
+  const s=document.getElementById('vm-status');
+  if(s)s.textContent='Uploading…';
+  try{
+    const fileName=`${me.id}/${Date.now()}.webm`;
+    const {data:upData,error:upErr}=await sb.storage.from('voice-notes').upload(fileName,vmBlob,{contentType:'audio/webm'});
+    if(upErr)throw upErr;
+    const {data:urlData}=await sb.storage.from('voice-notes').createSignedUrl(fileName,60*60*24*7);
+    const voiceUrl=urlData?.signedUrl;
+    if(!voiceUrl)throw new Error('Could not get voice URL');
     const time=tNow();const tmpId='tmp'+Date.now();const sentAt=Date.now();
     if(!chats[cur.id])chats[cur.id]=[];
-    chats[cur.id].push({id:tmpId,from:'me',type:'voice',voiceData:b64,duration:dur,time,sentAt});
+    chats[cur.id].push({id:tmpId,from:'me',type:'voice',voiceData:voiceUrl,duration:dur,time,sentAt});
     renderMsgs();renderSB();
-    const {data}=await sb.from('messages').insert({sender_id:me.id,receiver_id:cur.id,text:'🎤 Voice message',type:'voice',voice_url:b64,duration:dur}).select().single();
+    const {data}=await sb.from('messages').insert({sender_id:me.id,receiver_id:cur.id,text:'🎤 Voice message',type:'voice',voice_url:voiceUrl,duration:dur}).select().single();
     if(data){const m=chats[cur.id].find(x=>x.id===tmpId);if(m){m.id='m'+data.id;m.db_id=data.id;}}
     toggleVoiceMsg();
-  };
-  reader.readAsDataURL(vmBlob);
+  }catch(err){
+    if(s)s.textContent='Upload failed. Try again.';
+    toast('Voice upload failed. Check connection.');
+    console.error(err);
+  }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1613,9 +1628,13 @@ async function initiateCall(c){
   callLog.unshift({id:'cl'+(data?.id||Date.now()),db_id:data?.id,contactId:c.id,number:c.phone,type:'dialed',time:tNow()});
   renderSB();
   showCallUI(c);
-  // Start real WebRTC call
   await startWebRTCCall(c.id);
-}
+  // Auto-miss after 30 seconds if no answer
+  const ringTmr=setTimeout(async()=>{
+    if(!pc||pc.connectionState!=='connected'){
+      endCall();toast('No answer');
+    }
+  },30000);
 
 function showCallUI(c){
   setAv(document.getElementById('call-av'),c,78);
