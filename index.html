@@ -1838,49 +1838,26 @@ function save(){} // Data is saved directly to Supabase now, this is a no-op kep
 /// ══════════════════════════════════════════════════════
 // BOOT (MOBILE DEBUG VERSION)
 // ══════════════════════════════════════════════════════
-(async () => {
-  try {
+(async()=>{
+  try{
     showLoading();
-    
-    const { data, error } = await sb.auth.getSession();
-    if (error) throw error;
-
-    if (data?.session?.user) {
-      try {
-        await loadAndInit(data.session.user);
-      } catch (initErr) {
-        alert('Init Error: ' + (initErr.message || JSON.stringify(initErr)));
-        me = null;
-        hideLoading();
-        showAuth('splash');
-      }
-    } else {
+    const {data,error}=await sb.auth.getSession();
+    if(error)throw error;
+    if(data?.session?.user){
+      await loadAndInit(data.session.user);
+    }else{
       hideLoading();
       showAuth('splash');
     }
-
-    sb.auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (event === 'SIGNED_IN' && session?.user && !me) {
-          await loadAndInit(session.user);
-        } else if (event === 'SIGNED_OUT') {
-          me = null;
-          hideLoading();
-          showAuth('splash');
-        } else if (event === 'PASSWORD_RECOVERY') {
-          hideLoading();
-          showAuth('forgot');
-        }
-      } catch (stateErr) {
-        alert('Auth Error: ' + (stateErr.message || JSON.stringify(stateErr)));
-        me = null;
-        hideLoading();
-        showAuth('splash');
+    sb.auth.onAuthStateChange(async(event,session)=>{
+      if(event==='SIGNED_IN'&&session?.user&&!me){
+        await loadAndInit(session.user);
       }
+      if(event==='SIGNED_OUT'){me=null;showAuth('splash');}
+      if(event==='PASSWORD_RECOVERY'){showAuth('forgot');}
     });
-
-  } catch (e) {
-    alert('Critical Error: ' + (e.message || JSON.stringify(e)));
+  }catch(e){
+    console.error('Boot error:',e);
     hideLoading();
     showAuth('splash');
   }
