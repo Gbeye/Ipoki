@@ -1837,26 +1837,52 @@ function save(){} // Data is saved directly to Supabase now, this is a no-op kep
 // ══════════════════════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════════════════════
-(async()=>{
-  try{
+(async () => {
+  try {
     showLoading();
-    const {data,error}=await sb.auth.getSession();
-    if(error)throw error;
-    if(data?.session?.user){
-      await loadAndInit(data.session.user);
-    }else{
+    
+    // 1. Fetch initial session
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+
+    // 2. Load data if user exists
+    if (data?.session?.user) {
+      try {
+        await loadAndInit(data.session.user);
+      } catch (initErr) {
+        console.error('Initialization error during boot:', initErr);
+        me = null;
+        hideLoading();
+        showAuth('splash');
+      }
+    } else {
       hideLoading();
       showAuth('splash');
     }
-    sb.auth.onAuthStateChange(async(event,session)=>{
-      if(event==='SIGNED_IN'&&session?.user&&!me){
-        await loadAndInit(session.user);
+
+    // 3. Listen for future auth state changes
+    sb.auth.onAuthStateChange(async (event, session) => {
+      try {
+        if (event === 'SIGNED_IN' && session?.user && !me) {
+          await loadAndInit(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          me = null;
+          hideLoading();
+          showAuth('splash');
+        } else if (event === 'PASSWORD_RECOVERY') {
+          hideLoading();
+          showAuth('forgot');
+        }
+      } catch (stateErr) {
+        console.error('Auth state change error:', stateErr);
+        me = null;
+        hideLoading();
+        showAuth('splash');
       }
-      if(event==='SIGNED_OUT'){me=null;showAuth('splash');}
-      if(event==='PASSWORD_RECOVERY'){showAuth('forgot');}
     });
-  }catch(e){
-    console.error('Boot error:',e);
+
+  } catch (e) {
+    console.error('Critical boot error:', e);
     hideLoading();
     showAuth('splash');
   }
