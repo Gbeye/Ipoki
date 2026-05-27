@@ -1839,20 +1839,26 @@ function save(){} // Data is saved directly to Supabase now, this is a no-op kep
 // ══════════════════════════════════════════════════════
 (async()=>{
   try{
-    const{data:{session}}=await sb.auth.getSession();
-    if(session?.user){
-      await loadAndInit(session.user);
+    showLoading();
+    const {data,error}=await sb.auth.getSession();
+    if(error)throw error;
+    if(data?.session?.user){
+      await loadAndInit(data.session.user);
     }else{
-      hideLoading();showAuth('splash');
+      hideLoading();
+      showAuth('splash');
     }
     sb.auth.onAuthStateChange(async(event,session)=>{
-      if(event==='SIGNED_IN'&&session?.user&&!me){await loadAndInit(session.user);}
+      if(event==='SIGNED_IN'&&session?.user&&!me){
+        await loadAndInit(session.user);
+      }
       if(event==='SIGNED_OUT'){me=null;showAuth('splash');}
       if(event==='PASSWORD_RECOVERY'){showAuth('forgot');}
     });
   }catch(e){
     console.error('Boot error:',e);
-    hideLoading();showAuth('splash');
+    hideLoading();
+    showAuth('splash');
   }
 })();
 </script>
