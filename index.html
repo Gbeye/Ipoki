@@ -1635,6 +1635,7 @@ async function initiateCall(c){
       endCall();toast('No answer');
     }
   },30000);
+} // <--- MAKE SURE THIS CLOSING BRACKET IS DIRECTLY HERE TO CLOSE THE PARENT FUNCTION!
 
 function showCallUI(c){
   setAv(document.getElementById('call-av'),c,78);
